@@ -1,0 +1,609 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>新規訪問管理ツール</title>
+<link href="https://fonts.googleapis.com/css2?family=Rajdhani:wght@500;600;700&family=Noto+Sans+JP:wght@300;400;500;700&display=swap" rel="stylesheet">
+<style>
+:root{
+  --bg:#0a0c10;
+  --bg2:#0f1218;
+  --bg3:#151921;
+  --surface:#181e28;
+  --surface2:#1e2635;
+  --surface3:#242d3d;
+  --border:rgba(255,255,255,0.06);
+  --border2:rgba(255,255,255,0.12);
+  --accent:#00e5a0;
+  --accent2:rgba(0,229,160,0.12);
+  --accent3:rgba(0,229,160,0.25);
+  --accent-dim:#00b87d;
+  --red:#ff4d4d;--red2:rgba(255,77,77,0.12);
+  --amber:#ffb020;--amber2:rgba(255,176,32,0.12);
+  --blue:#4d9fff;--blue2:rgba(77,159,255,0.12);
+  --purple:#a78bfa;--purple2:rgba(167,139,250,0.12);
+  --text:#f0f4ff;--text2:#b0bcd0;--text3:#7a8a9e;
+  --radius:10px;--radius-sm:6px;
+  --font-display:'Rajdhani',sans-serif;
+  --font:'Noto Sans JP',sans-serif;
+}
+*{box-sizing:border-box;margin:0;padding:0}
+body{font-family:var(--font);background:var(--bg);color:var(--text);min-height:100vh;font-size:15px;-webkit-font-smoothing:antialiased}
+
+/* SCANLINE TEXTURE */
+body::before{content:'';position:fixed;inset:0;background:repeating-linear-gradient(0deg,transparent,transparent 2px,rgba(0,0,0,0.03) 2px,rgba(0,0,0,0.03) 4px);pointer-events:none;z-index:0}
+
+/* NAV */
+.nav{background:rgba(10,12,16,0.95);backdrop-filter:blur(20px);border-bottom:1px solid var(--border);padding:0 24px;display:flex;align-items:center;height:56px;position:sticky;top:0;z-index:100;gap:0}
+.nav-logo{font-family:var(--font-display);font-size:18px;font-weight:700;color:var(--accent);letter-spacing:.1em;margin-right:auto;display:flex;align-items:center;gap:8px}
+.nav-logo::before{content:'';width:8px;height:8px;background:var(--accent);border-radius:50%;box-shadow:0 0 10px var(--accent);animation:pulse 2s infinite}
+@keyframes pulse{0%,100%{opacity:1;transform:scale(1)}50%{opacity:.5;transform:scale(0.8)}}
+.nav-tab{color:var(--text2);padding:0 16px;height:56px;display:flex;align-items:center;cursor:pointer;font-size:14px;font-family:var(--font-display);font-weight:600;letter-spacing:.06em;border-bottom:2px solid transparent;transition:all .2s;white-space:nowrap;text-transform:uppercase}
+.nav-tab:hover{color:var(--text)}
+.nav-tab.active{color:var(--accent);border-bottom-color:var(--accent)}
+
+/* MAIN */
+.main{max-width:1000px;margin:0 auto;padding:28px 20px;position:relative;z-index:1}
+.section{display:none}.section.active{display:block}
+
+/* SECTION HEADER */
+.section-hd{display:flex;justify-content:space-between;align-items:center;margin-bottom:24px;flex-wrap:wrap;gap:10px}
+.section-hd h2{font-family:var(--font-display);font-size:22px;font-weight:700;letter-spacing:.08em;color:var(--text);text-transform:uppercase}
+.section-hd-btns{display:flex;gap:8px;flex-wrap:wrap}
+
+/* CARDS */
+.card{background:var(--surface);border:1px solid var(--border);border-radius:var(--radius);padding:20px;margin-bottom:16px;position:relative;overflow:hidden}
+.card::before{content:'';position:absolute;top:0;left:0;right:0;height:1px;background:linear-gradient(90deg,transparent,rgba(0,229,160,0.3),transparent)}
+.card-title{font-family:var(--font-display);font-size:13px;font-weight:600;letter-spacing:.12em;color:var(--text2);margin-bottom:14px;text-transform:uppercase}
+
+/* KPI GRID */
+.kpi-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(140px,1fr));gap:10px;margin-bottom:16px}
+.kpi-card{background:var(--surface);border:1px solid var(--border);border-radius:var(--radius);padding:16px;position:relative;overflow:hidden;transition:border-color .2s}
+.kpi-card:hover{border-color:var(--border2)}
+.kpi-card::after{content:'';position:absolute;bottom:0;left:0;right:0;height:2px;background:linear-gradient(90deg,transparent,var(--accent),transparent);opacity:.3}
+.kpi-label{font-size:12px;color:var(--text2);margin-bottom:6px;font-family:var(--font-display);letter-spacing:.1em;text-transform:uppercase}
+.kpi-row{display:flex;align-items:baseline;gap:4px}
+.kpi-val{font-family:var(--font-display);font-size:36px;font-weight:700;color:var(--accent);line-height:1}
+.kpi-target-val{font-size:14px;color:var(--text2)}
+.kpi-bar-bg{height:2px;background:var(--surface3);border-radius:2px;margin-top:10px}
+.kpi-bar{height:2px;background:linear-gradient(90deg,var(--accent-dim),var(--accent));border-radius:2px;transition:width .6s ease;box-shadow:0 0 8px var(--accent)}
+
+/* FUNNEL */
+.funnel{display:flex;overflow-x:auto;padding-bottom:8px;gap:0}
+.funnel-step{flex:1;min-width:75px;text-align:center;padding:14px 4px;border-right:1px solid var(--border)}
+.funnel-step:last-child{border-right:none}
+.funnel-num{font-family:var(--font-display);font-size:24px;font-weight:700;color:var(--accent)}
+.funnel-lbl{font-size:12px;color:var(--text2);margin-top:4px;font-family:var(--font-display);letter-spacing:.06em;text-transform:uppercase}
+.funnel-rate{font-size:12px;color:var(--text);margin-top:4px}
+
+/* BUTTONS */
+.btn{display:inline-flex;align-items:center;gap:6px;padding:8px 16px;border-radius:var(--radius-sm);border:none;cursor:pointer;font-family:var(--font);font-size:13px;font-weight:500;transition:all .15s}
+.btn-primary{background:var(--accent);color:#000;font-weight:700}.btn-primary:hover{background:#00ffb3;box-shadow:0 0 20px rgba(0,229,160,0.4)}
+.btn-secondary{background:var(--surface2);color:var(--text2);border:1px solid var(--border)}.btn-secondary:hover{background:var(--surface3);color:var(--text)}
+.btn-outline{background:transparent;color:var(--accent);border:1px solid rgba(0,229,160,0.3)}.btn-outline:hover{background:var(--accent2)}
+.btn-sm{padding:5px 12px;font-size:12px}
+.btn-danger{background:var(--red2);color:var(--red);border:1px solid rgba(255,77,77,0.2)}.btn-danger:hover{background:rgba(255,77,77,0.2)}
+
+/* FORMS */
+.form-grid{display:grid;grid-template-columns:1fr 1fr;gap:12px}
+@media(max-width:600px){.form-grid{grid-template-columns:1fr}}
+.form-full{grid-column:1/-1}
+label{display:block;font-size:12px;color:var(--text2);margin-bottom:5px;font-family:var(--font-display);letter-spacing:.08em;text-transform:uppercase}
+input,select,textarea{width:100%;padding:9px 12px;border:1px solid var(--border2);border-radius:var(--radius-sm);font-family:var(--font);font-size:13px;color:var(--text);background:var(--surface2);transition:border-color .15s}
+input:focus,select:focus,textarea:focus{outline:none;border-color:var(--accent);box-shadow:0 0 0 3px rgba(0,229,160,0.1)}
+textarea{resize:vertical;min-height:72px}
+select option{background:var(--surface2)}
+
+/* COMBO */
+.combo-wrap{position:relative}
+.combo-input{width:100%;padding:9px 12px;border:1px solid var(--border2);border-radius:var(--radius-sm);font-family:var(--font);font-size:13px;color:var(--text);background:var(--surface2);transition:border-color .15s}
+.combo-input:focus{outline:none;border-color:var(--accent);box-shadow:0 0 0 3px rgba(0,229,160,0.1)}
+.combo-list{position:absolute;top:calc(100% + 4px);left:0;right:0;background:var(--surface3);border:1px solid var(--border2);border-radius:var(--radius-sm);z-index:50;max-height:180px;overflow-y:auto;display:none;box-shadow:0 8px 24px rgba(0,0,0,0.4)}
+.combo-list.open{display:block}
+.combo-item{padding:9px 12px;cursor:pointer;font-size:13px;color:var(--text2);transition:all .1s}
+.combo-item:hover{background:var(--accent2);color:var(--accent)}
+
+/* REACTION BTNS */
+.reaction-select{display:flex;flex-wrap:wrap;gap:6px}
+.r-btn{padding:6px 14px;border-radius:20px;border:1px solid var(--border2);cursor:pointer;font-size:12px;background:var(--surface2);color:var(--text2);transition:all .15s;font-weight:500}
+.r-btn:hover{border-color:var(--border2);color:var(--text)}
+.r-btn[data-level="1"].selected{background:var(--red2);color:var(--red);border-color:rgba(255,77,77,0.4)}
+.r-btn[data-level="2"].selected{background:var(--amber2);color:var(--amber);border-color:rgba(255,176,32,0.4)}
+.r-btn[data-level="3"].selected{background:var(--blue2);color:var(--blue);border-color:rgba(77,159,255,0.4)}
+.r-btn[data-level="4"].selected{background:var(--accent2);color:var(--accent);border-color:var(--accent3)}
+.r-btn[data-level="5"].selected{background:var(--purple2);color:var(--purple);border-color:rgba(167,139,250,0.4)}
+
+/* AI BOX */
+.ai-box{background:var(--accent2);border:1px solid var(--accent3);border-radius:var(--radius-sm);padding:12px 14px;margin-top:8px;font-size:13px;color:var(--accent);line-height:1.7;display:none}
+.ai-loading{color:var(--text3);font-style:italic}
+
+/* TABLES */
+.log-table,.company-table{width:100%;border-collapse:collapse;font-size:14px}
+.log-table th,.company-table th{text-align:left;padding:10px 12px;font-size:12px;color:var(--text2);font-weight:600;border-bottom:1px solid var(--border);white-space:nowrap;font-family:var(--font-display);letter-spacing:.1em;text-transform:uppercase}
+.log-table td,.company-table td{padding:11px 12px;border-bottom:1px solid var(--border);vertical-align:middle}
+.log-table tr:last-child td,.company-table tr:last-child td{border-bottom:none}
+.log-table tr:hover td,.company-table tr:hover td{background:rgba(255,255,255,0.02)}
+
+/* BADGES */
+.badge{display:inline-block;padding:3px 10px;border-radius:20px;font-size:12px;font-weight:500}
+.badge-red{background:var(--red2);color:var(--red)}
+.badge-amber{background:var(--amber2);color:var(--amber)}
+.badge-blue{background:var(--blue2);color:var(--blue)}
+.badge-green{background:var(--accent2);color:var(--accent)}
+.badge-purple{background:var(--purple2);color:var(--purple)}
+.date-badge{display:inline-block;background:var(--blue2);color:var(--blue);padding:3px 10px;border-radius:12px;font-size:11px;font-weight:500}
+.status-dot{display:inline-block;width:7px;height:7px;border-radius:50%;margin-right:6px}
+
+/* SEARCH */
+.search-row{display:flex;gap:8px;margin-bottom:16px;flex-wrap:wrap}
+.search-row input{flex:1;min-width:140px}
+
+/* MODAL */
+.modal-overlay{display:none;position:fixed;inset:0;background:rgba(0,0,0,0.7);backdrop-filter:blur(4px);z-index:200;align-items:center;justify-content:center;padding:16px}
+.modal-overlay.open{display:flex}
+.modal{background:var(--bg2);border:1px solid var(--border2);border-radius:var(--radius);max-width:660px;width:100%;max-height:92vh;overflow-y:auto;padding:28px;position:relative}
+.modal::before{content:'';position:absolute;top:0;left:0;right:0;height:1px;background:linear-gradient(90deg,transparent,var(--accent),transparent)}
+.modal-header{display:flex;justify-content:space-between;align-items:center;margin-bottom:20px}
+.modal-title{font-family:var(--font-display);font-size:16px;font-weight:700;letter-spacing:.08em;text-transform:uppercase;color:var(--accent)}
+.close-btn{background:var(--surface2);border:1px solid var(--border);border-radius:4px;cursor:pointer;font-size:16px;color:var(--text3);width:28px;height:28px;display:flex;align-items:center;justify-content:center;line-height:1;transition:all .15s}
+.close-btn:hover{color:var(--text);border-color:var(--border2)}
+
+/* KPI SETTINGS */
+.kpi-settings-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(180px,1fr));gap:8px}
+.kpi-setting-row{display:flex;align-items:center;gap:10px;padding:10px 14px;background:var(--surface2);border:1px solid var(--border);border-radius:var(--radius-sm)}
+.kpi-setting-label{flex:1;font-size:13px;color:var(--text2)}
+.kpi-setting-input{width:80px;text-align:right;padding:6px 10px}
+
+/* DICT */
+.dict-cat{font-family:var(--font-display);font-size:12px;font-weight:600;color:var(--accent);margin:20px 0 10px;letter-spacing:.12em;text-transform:uppercase;display:flex;align-items:center;gap:8px}
+.dict-cat::after{content:'';flex:1;height:1px;background:var(--border)}
+.dict-row{display:flex;gap:12px;padding:10px 0;border-bottom:1px solid var(--border);align-items:flex-start}
+.dict-trigger{flex:0 0 140px;font-size:12px;color:var(--accent);background:var(--accent2);padding:5px 10px;border-radius:4px;border:1px solid var(--accent3);font-weight:500}
+.dict-expr{flex:1;font-size:12px;color:var(--text2);line-height:1.6}
+
+/* ZIP ROW */
+.zip-row{display:flex;gap:6px;align-items:flex-end}
+.zip-row input:first-child{flex:0 0 110px}
+.zip-row .zip-result{flex:1}
+
+.empty{text-align:center;padding:48px 20px;color:var(--text3);font-family:var(--font-display);letter-spacing:.06em;text-transform:uppercase;font-size:12px}
+</style>
+</head>
+<body>
+
+<nav class="nav">
+  <div class="nav-logo">⬡ SALES TRACKER</div>
+  <span class="nav-tab active" onclick="showSection('dashboard',this)">Dashboard</span>
+  <span class="nav-tab" onclick="showSection('record',this)">訪問記録</span>
+  <span class="nav-tab" onclick="showSection('companies',this)">企業リスト</span>
+  <span class="nav-tab" onclick="showSection('dict',this)">表現辞典</span>
+</nav>
+
+<div class="main">
+
+<!-- DASHBOARD -->
+<div class="section active" id="section-dashboard">
+  <div class="section-hd">
+    <h2>KPI Dashboard</h2>
+    <div class="section-hd-btns">
+      <span id="dashboard-month" style="font-size:12px;color:var(--text3);align-self:center;font-family:var(--font-display);letter-spacing:.06em"></span>
+      <button class="btn btn-outline btn-sm" onclick="toggleKpiEdit()">⚙ 目標値を編集</button>
+    </div>
+  </div>
+
+  <div id="kpi-edit-panel" style="display:none" class="card">
+    <div class="card-title">目標値の設定（年間）</div>
+    <div class="kpi-settings-grid" id="kpi-settings-grid"></div>
+    <div style="margin-top:16px;display:flex;gap:8px">
+      <button class="btn btn-primary btn-sm" onclick="saveKpiTargets()">保存</button>
+      <button class="btn btn-secondary btn-sm" onclick="toggleKpiEdit()">キャンセル</button>
+    </div>
+  </div>
+
+  <div class="kpi-grid" id="kpi-grid"></div>
+
+  <div class="card">
+    <div class="card-title">Conversion Funnel（年間累計）</div>
+    <div class="funnel" id="funnel-view"></div>
+  </div>
+
+  <div class="card">
+    <div class="card-title">Recent Visits（直近10件）</div>
+    <div id="recent-log"></div>
+  </div>
+</div>
+
+<!-- RECORD -->
+<div class="section" id="section-record">
+  <div class="section-hd">
+    <h2>訪問記録</h2>
+    <div class="section-hd-btns">
+      <button class="btn btn-outline btn-sm" onclick="exportIcs()">📅 .ics 出力</button>
+      <button class="btn btn-primary btn-sm" onclick="openVisitModal()">＋ 新規登録</button>
+    </div>
+  </div>
+  <div class="search-row">
+    <input type="text" id="log-search" placeholder="会社名・業種で検索..." oninput="renderLog()">
+    <select id="log-filter-reaction" onchange="renderLog()" style="width:130px">
+      <option value="">反応 すべて</option>
+      <option value="1">完全拒否</option><option value="2">塩対応</option>
+      <option value="3">様子見</option><option value="4">興味あり</option><option value="5">前向き</option>
+    </select>
+  </div>
+  <div class="card" style="padding:0;overflow:hidden"><div id="log-table-wrap"></div></div>
+</div>
+
+<!-- COMPANIES -->
+<div class="section" id="section-companies">
+  <div class="section-hd">
+    <h2>企業リスト</h2>
+    <div class="section-hd-btns">
+      <label class="btn btn-outline btn-sm" style="cursor:pointer">📥 CSVインポート<input type="file" accept=".csv" id="csv-import" style="display:none" onchange="importCsv(event)"></label>
+      <button class="btn btn-outline btn-sm" onclick="exportCsv()">📤 CSVエクスポート</button>
+      <button class="btn btn-primary btn-sm" onclick="openCompanyModal()">＋ 企業追加</button>
+    </div>
+  </div>
+  <div class="search-row">
+    <input type="text" id="co-search" placeholder="会社名・業種・エリアで検索..." oninput="renderCompanies()">
+    <select id="co-filter-status" onchange="renderCompanies()" style="width:130px">
+      <option value="">ステータス すべて</option>
+      <option>未訪問</option><option>訪問済</option><option>接触済</option>
+      <option>見積中</option><option>受注</option><option>見送り</option>
+    </select>
+  </div>
+  <div class="card" style="padding:0;overflow:hidden"><div id="company-table-wrap"></div></div>
+</div>
+
+<!-- DICT -->
+<div class="section" id="section-dict">
+  <div class="section-hd"><h2>表現辞典</h2></div>
+  <div class="card">
+    <p style="font-size:12px;color:var(--text3);margin-bottom:4px">「なんとなく感じた」を営業言語に変換するための表現集。AIボタンと組み合わせて使ってください。</p>
+    <div id="dict-content"></div>
+  </div>
+</div>
+
+</div>
+
+<!-- VISIT MODAL -->
+<div class="modal-overlay" id="visit-modal">
+<div class="modal">
+  <div class="modal-header">
+    <span class="modal-title" id="visit-modal-title">新規登録</span>
+    <button class="close-btn" onclick="closeVisitModal()">✕</button>
+  </div>
+  <input type="hidden" id="f-id">
+  <div class="form-grid">
+    <div><label>訪問日 *</label><input type="date" id="f-date"></div>
+    <div><label>会社名 *</label><input type="text" id="f-company" list="company-datalist" placeholder="株式会社〇〇"><datalist id="company-datalist"></datalist></div>
+    <div><label>業種</label><div class="combo-wrap"><input class="combo-input" id="f-industry" placeholder="選択または入力..." autocomplete="off" oninput="filterCombo('f-industry','industry-list',INDUSTRY_OPTIONS)" onfocus="openCombo('f-industry','industry-list',INDUSTRY_OPTIONS)" onblur="setTimeout(()=>closeCombo('industry-list'),150)"><div class="combo-list" id="industry-list"></div></div></div>
+    <div><label>対応者</label><select id="f-responder"><option>受付スタッフ</option><option>担当者（名刺交換）</option><option>担当者（名刺なし）</option><option>上長・決裁者</option><option>不在</option><option>その他</option></select></div>
+    <div class="form-full"><label>相手の反応</label><div class="reaction-select"><span class="r-btn" data-level="1" onclick="selectReaction(this)">😤 完全拒否</span><span class="r-btn" data-level="2" onclick="selectReaction(this)">🥶 塩対応</span><span class="r-btn" data-level="3" onclick="selectReaction(this)">😐 様子見</span><span class="r-btn" data-level="4" onclick="selectReaction(this)">😊 興味あり</span><span class="r-btn" data-level="5" onclick="selectReaction(this)">🔥 前向き</span></div></div>
+    <div class="form-full"><label>どんな話をしたか</label><textarea id="f-talk" placeholder="簡単に..."></textarea></div>
+    <div class="form-full"><label>相手の様子・雰囲気（自由記述）</label><textarea id="f-impression" placeholder="なんとなく感じたことを書いてください"></textarea><button class="btn btn-outline btn-sm" style="margin-top:8px" onclick="rewriteImpression()">✨ AIで営業表現に変換</button><div class="ai-box" id="ai-impression-box"></div></div>
+    <div class="form-full"><label>相手の特徴・人物メモ</label><textarea id="f-person" placeholder="40代男性、メガネ、話が早い、直球が効く etc."></textarea></div>
+    <div><label>断られた理由</label><div class="combo-wrap"><input class="combo-input" id="f-reject" placeholder="選択または入力..." autocomplete="off" oninput="filterCombo('f-reject','reject-list',REJECT_OPTIONS)" onfocus="openCombo('f-reject','reject-list',REJECT_OPTIONS)" onblur="setTimeout(()=>closeCombo('reject-list'),150)"><div class="combo-list" id="reject-list"></div></div></div>
+    <div><label>反応が良かった内容</label><div class="combo-wrap"><input class="combo-input" id="f-good" placeholder="選択または入力..." autocomplete="off" oninput="filterCombo('f-good','good-list',GOOD_OPTIONS)" onfocus="openCombo('f-good','good-list',GOOD_OPTIONS)" onblur="setTimeout(()=>closeCombo('good-list'),150)"><div class="combo-list" id="good-list"></div></div></div>
+    <div><label>次回アクション</label><div class="combo-wrap"><input class="combo-input" id="f-next-action" placeholder="選択または入力..." autocomplete="off" oninput="filterCombo('f-next-action','next-action-list',NEXT_ACTION_OPTIONS)" onfocus="openCombo('f-next-action','next-action-list',NEXT_ACTION_OPTIONS)" onblur="setTimeout(()=>closeCombo('next-action-list'),150)"><div class="combo-list" id="next-action-list"></div></div></div>
+    <div><label>次回訪問候補日</label><input type="date" id="f-next-date"></div>
+  </div>
+  <div style="display:flex;gap:8px;margin-top:24px;justify-content:flex-end">
+    <button class="btn btn-secondary" onclick="closeVisitModal()">キャンセル</button>
+    <button class="btn btn-primary" onclick="saveVisit()">保存</button>
+  </div>
+</div>
+</div>
+
+<!-- COMPANY MODAL -->
+<div class="modal-overlay" id="company-modal">
+<div class="modal">
+  <div class="modal-header">
+    <span class="modal-title" id="co-modal-title">企業登録</span>
+    <button class="close-btn" onclick="closeCompanyModal()">✕</button>
+  </div>
+  <input type="hidden" id="co-id">
+  <div class="form-grid">
+    <div><label>会社名 *</label><input type="text" id="co-name"></div>
+    <div><label>業種</label><div class="combo-wrap"><input class="combo-input" id="co-industry" placeholder="選択または入力..." autocomplete="off" oninput="filterCombo('co-industry','co-industry-list',INDUSTRY_OPTIONS)" onfocus="openCombo('co-industry','co-industry-list',INDUSTRY_OPTIONS)" onblur="setTimeout(()=>closeCombo('co-industry-list'),150)"><div class="combo-list" id="co-industry-list"></div></div></div>
+    <div class="form-full"><label>郵便番号（入力で住所自動補完）</label><div class="zip-row"><input type="text" id="co-zip" placeholder="例：980-0021" maxlength="8" oninput="lookupZip()"><input type="text" id="co-address1" placeholder="都道府県・市区町村（自動補完）" class="zip-result"></div></div>
+    <div class="form-full"><label>番地・建物名</label><input type="text" id="co-address2" placeholder="1-1-1 〇〇ビル2F"></div>
+    <div><label>ステータス</label><select id="co-status"><option>未訪問</option><option>訪問済</option><option>接触済</option><option>見積中</option><option>受注</option><option>見送り</option></select></div>
+    <div><label>担当者名</label><input type="text" id="co-contact" placeholder="山田 太郎"></div>
+    <div><label>担当者 役職</label><input type="text" id="co-title" placeholder="営業部長 etc."></div>
+    <div><label>電話番号</label><input type="tel" id="co-phone" placeholder="022-123-4567"></div>
+    <div class="form-full"><label>メモ</label><textarea id="co-note" style="min-height:56px"></textarea></div>
+  </div>
+  <div style="display:flex;gap:8px;margin-top:24px;justify-content:flex-end">
+    <button class="btn btn-secondary" onclick="closeCompanyModal()">キャンセル</button>
+    <button class="btn btn-primary" onclick="saveCompany()">保存</button>
+  </div>
+</div>
+</div>
+
+<script>
+const DEFAULT_TARGETS={research:600,visit:360,contact:120,card:60,info:36,hearing:12,quote:6,order:12};
+let kpiTargets=JSON.parse(localStorage.getItem('nv_kpi')||JSON.stringify(DEFAULT_TARGETS));
+let visits=JSON.parse(localStorage.getItem('nv_visits')||'[]');
+let companies=JSON.parse(localStorage.getItem('nv_companies')||'[]');
+const KPI_META=[{key:'research',label:'ターゲット選定'},{key:'visit',label:'訪問'},{key:'contact',label:'担当者接触'},{key:'card',label:'名刺交換'},{key:'info',label:'情報収集'},{key:'hearing',label:'案件ヒアリング'},{key:'quote',label:'見積'},{key:'order',label:'受注'}];
+const REACTION_LABELS=['','完全拒否','塩対応','様子見','興味あり','前向き'];
+const REACTION_BADGE=['','badge-red','badge-amber','badge-blue','badge-green','badge-purple'];
+const STATUS_COLOR={未訪問:'#4a5568',訪問済:'#00e5a0',接触済:'#4d9fff',見積中:'#ffb020',受注:'#00e5a0',見送り:'#ff4d4d'};
+const INDUSTRY_OPTIONS=['製造業','建設業','小売業','卸売業','飲食業','医療・福祉','IT・通信','金融・保険','不動産','運輸・物流','教育・学習支援','農業・林業・漁業','サービス業','その他'];
+const REJECT_OPTIONS=['タイミングが悪い','担当者不在','予算がない','既存業者がいる','必要性を感じない','上司に確認が必要','忙しい','興味がない','価格が合わない','その他'];
+const GOOD_OPTIONS=['価格・コスト','スピード感','実績・事例','サービス内容','アフターフォロー','対応の丁寧さ','信頼性・実績','使いやすさ','カスタマイズ対応','その他'];
+const NEXT_ACTION_OPTIONS=['再訪問','担当者アポ取り','資料送付','電話フォロー','見積書作成','デモ・説明会','紹介依頼','御礼状送付','その他'];
+
+function save(){localStorage.setItem('nv_visits',JSON.stringify(visits));localStorage.setItem('nv_companies',JSON.stringify(companies));localStorage.setItem('nv_kpi',JSON.stringify(kpiTargets));}
+function uid(){return Date.now().toString(36)+Math.random().toString(36).slice(2);}
+
+function showSection(name,el){
+  document.querySelectorAll('.section').forEach(s=>s.classList.remove('active'));
+  document.querySelectorAll('.nav-tab').forEach(t=>t.classList.remove('active'));
+  document.getElementById('section-'+name).classList.add('active');
+  el.classList.add('active');
+  if(name==='dashboard')renderDashboard();
+  if(name==='record')renderLog();
+  if(name==='companies')renderCompanies();
+  if(name==='dict')renderDict();
+}
+
+function openCombo(inputId,listId,opts){filterCombo(inputId,listId,opts);document.getElementById(listId).classList.add('open');}
+function closeCombo(listId){document.getElementById(listId).classList.remove('open');}
+function filterCombo(inputId,listId,opts){const q=document.getElementById(inputId).value.toLowerCase();const filtered=q?opts.filter(o=>o.toLowerCase().includes(q)):opts;const list=document.getElementById(listId);list.innerHTML=filtered.map(o=>`<div class="combo-item" onmousedown="pickCombo('${inputId}','${listId}',\`${o}\`)">${o}</div>`).join('');if(filtered.length)list.classList.add('open');else list.classList.remove('open');}
+function pickCombo(inputId,listId,val){document.getElementById(inputId).value=val;closeCombo(listId);}
+
+function calcKpiActuals(){
+  const total=visits.length;
+  const contact=visits.filter(v=>['担当者（名刺交換）','担当者（名刺なし）','上長・決裁者'].includes(v.responder)).length;
+  const card=visits.filter(v=>v.responder==='担当者（名刺交換）').length;
+  const info=visits.filter(v=>v.good||v.talk).length;
+  const hearing=visits.filter(v=>v.reaction>=4).length;
+  const order=companies.filter(c=>c.status==='受注').length;
+  const quote=companies.filter(c=>c.status==='見積中'||c.status==='受注').length;
+  const research=companies.length;
+  return{research,visit:total,contact,card,info,hearing,quote,order};
+}
+
+function renderDashboard(){
+  const now=new Date();
+  document.getElementById('dashboard-month').textContent=now.getFullYear()+' / '+(now.getMonth()+1);
+  const actuals=calcKpiActuals();
+  document.getElementById('kpi-grid').innerHTML=KPI_META.map(k=>{
+    const v=actuals[k.key]||0,t=kpiTargets[k.key]||1;
+    const pct=Math.min(100,Math.round(v/t*100));
+    return `<div class="kpi-card"><div class="kpi-label">${k.label}</div><div class="kpi-row"><span class="kpi-val">${v}</span><span class="kpi-target-val"> / ${t}</span></div><div class="kpi-bar-bg"><div class="kpi-bar" style="width:${pct}%"></div></div></div>`;
+  }).join('');
+  const funnel=[{l:'訪問',v:actuals.visit},{l:'担当接触',v:actuals.contact},{l:'名刺交換',v:actuals.card},{l:'情報収集',v:actuals.info},{l:'ヒアリング',v:actuals.hearing},{l:'見積',v:actuals.quote},{l:'受注',v:actuals.order}];
+  document.getElementById('funnel-view').innerHTML=funnel.map((f,i)=>{const prev=i===0?f.v:funnel[i-1].v;const rate=prev>0?Math.round(f.v/prev*100)+'%':'—';return `<div class="funnel-step"><div class="funnel-num">${f.v}</div><div class="funnel-lbl">${f.l}</div>${i>0?`<div class="funnel-rate">${rate}</div>`:''}</div>`;}).join('');
+  const recent=[...visits].sort((a,b)=>b.date.localeCompare(a.date)).slice(0,10);
+  const rl=document.getElementById('recent-log');
+  if(!recent.length){rl.innerHTML='<div class="empty">— No Records —</div>';return;}
+  rl.innerHTML=`<table class="log-table"><thead><tr><th>Date</th><th>会社名</th><th>反応</th><th>次回候補日</th><th>次回アクション</th></tr></thead><tbody>`+recent.map(v=>`<tr><td style="white-space:nowrap;font-family:var(--font-display);color:var(--text2)">${v.date}</td><td><strong>${v.company}</strong></td><td>${v.reaction?`<span class="badge ${REACTION_BADGE[v.reaction]}">${REACTION_LABELS[v.reaction]}</span>`:''}</td><td>${v.nextDate?`<span class="date-badge">${v.nextDate}</span>`:''}</td><td style="font-size:12px;color:var(--text2)">${v.nextAction||''}</td></tr>`).join('')+'</tbody></table>';
+}
+
+function toggleKpiEdit(){
+  const p=document.getElementById('kpi-edit-panel');
+  if(p.style.display==='none'){p.style.display='block';document.getElementById('kpi-settings-grid').innerHTML=KPI_META.map(k=>`<div class="kpi-setting-row"><span class="kpi-setting-label">${k.label}</span><input class="kpi-setting-input" type="number" id="kpi-input-${k.key}" value="${kpiTargets[k.key]}"></div>`).join('');}
+  else{p.style.display='none';}
+}
+function saveKpiTargets(){KPI_META.forEach(k=>{const v=parseInt(document.getElementById('kpi-input-'+k.key).value);if(!isNaN(v)&&v>=0)kpiTargets[k.key]=v;});save();toggleKpiEdit();renderDashboard();}
+
+function renderLog(){
+  const q=(document.getElementById('log-search').value||'').toLowerCase();
+  const rf=document.getElementById('log-filter-reaction').value;
+  let data=[...visits].sort((a,b)=>b.date.localeCompare(a.date));
+  if(q)data=data.filter(v=>(v.company+v.industry).toLowerCase().includes(q));
+  if(rf)data=data.filter(v=>String(v.reaction)===rf);
+  const wrap=document.getElementById('log-table-wrap');
+  if(!data.length){wrap.innerHTML='<div class="empty">— No Records —</div>';return;}
+  wrap.innerHTML=`<table class="log-table"><thead><tr><th>Date</th><th>会社名</th><th>業種</th><th>対応者</th><th>反応</th><th>次回候補日</th><th>次回アクション</th><th></th></tr></thead><tbody>`+data.map(v=>`<tr><td style="white-space:nowrap;font-family:var(--font-display);color:var(--text2)">${v.date}</td><td><strong>${v.company}</strong></td><td style="font-size:11px;color:var(--text3)">${v.industry||''}</td><td style="font-size:11px;color:var(--text2)">${v.responder}</td><td>${v.reaction?`<span class="badge ${REACTION_BADGE[v.reaction]}">${REACTION_LABELS[v.reaction]}</span>`:''}</td><td>${v.nextDate?`<span class="date-badge">${v.nextDate}</span>`:''}</td><td style="font-size:11px;color:var(--text2)">${v.nextAction||''}</td><td style="white-space:nowrap"><button class="btn btn-secondary btn-sm" onclick='editVisit("${v.id}")' style="margin-right:4px">編集</button><button class="btn btn-danger btn-sm" onclick='deleteVisit("${v.id}")'>削除</button></td></tr>`).join('')+'</tbody></table>';
+}
+
+let selectedReaction=0;
+function openVisitModal(){
+  document.getElementById('visit-modal-title').textContent='訪問記録 新規登録';
+  document.getElementById('f-id').value='';
+  document.getElementById('f-date').value=new Date().toISOString().split('T')[0];
+  ['f-company','f-industry','f-talk','f-impression','f-person','f-reject','f-good','f-next-action','f-next-date'].forEach(id=>document.getElementById(id).value='');
+  document.getElementById('f-responder').selectedIndex=0;
+  document.querySelectorAll('.r-btn').forEach(b=>b.classList.remove('selected'));
+  selectedReaction=0;
+  document.getElementById('ai-impression-box').style.display='none';
+  document.getElementById('company-datalist').innerHTML=companies.map(c=>`<option value="${c.name}">`).join('');
+  document.getElementById('visit-modal').classList.add('open');
+}
+function closeVisitModal(){document.getElementById('visit-modal').classList.remove('open');}
+function selectReaction(el){document.querySelectorAll('.r-btn').forEach(b=>b.classList.remove('selected'));el.classList.add('selected');selectedReaction=parseInt(el.dataset.level);}
+function editVisit(id){
+  const v=visits.find(x=>x.id===id);if(!v)return;
+  document.getElementById('visit-modal-title').textContent='訪問記録 編集';
+  document.getElementById('f-id').value=v.id;
+  document.getElementById('f-date').value=v.date;
+  document.getElementById('f-company').value=v.company;
+  document.getElementById('f-industry').value=v.industry||'';
+  document.getElementById('f-responder').value=v.responder;
+  document.getElementById('f-talk').value=v.talk||'';
+  document.getElementById('f-impression').value=v.impression||'';
+  document.getElementById('f-person').value=v.person||'';
+  document.getElementById('f-reject').value=v.reject||'';
+  document.getElementById('f-good').value=v.good||'';
+  document.getElementById('f-next-action').value=v.nextAction||'';
+  document.getElementById('f-next-date').value=v.nextDate||'';
+  document.querySelectorAll('.r-btn').forEach(b=>{b.classList.remove('selected');if(parseInt(b.dataset.level)===v.reaction)b.classList.add('selected');});
+  selectedReaction=v.reaction||0;
+  document.getElementById('ai-impression-box').style.display='none';
+  document.getElementById('company-datalist').innerHTML=companies.map(c=>`<option value="${c.name}">`).join('');
+  document.getElementById('visit-modal').classList.add('open');
+}
+function deleteVisit(id){if(!confirm('削除しますか？'))return;visits=visits.filter(v=>v.id!==id);save();renderLog();renderDashboard();}
+function saveVisit(){
+  const company=document.getElementById('f-company').value.trim();
+  if(!company){alert('会社名を入力してください');return;}
+  const id=document.getElementById('f-id').value||uid();
+  const v={id,date:document.getElementById('f-date').value,company,industry:document.getElementById('f-industry').value,responder:document.getElementById('f-responder').value,reaction:selectedReaction,talk:document.getElementById('f-talk').value,impression:document.getElementById('f-impression').value,person:document.getElementById('f-person').value,reject:document.getElementById('f-reject').value,good:document.getElementById('f-good').value,nextAction:document.getElementById('f-next-action').value,nextDate:document.getElementById('f-next-date').value};
+  if(document.getElementById('f-id').value){visits=visits.map(x=>x.id===id?v:x);}else{visits.push(v);}
+  save();closeVisitModal();renderLog();renderDashboard();
+}
+
+async function rewriteImpression(){
+  const text=document.getElementById('f-impression').value.trim();
+  if(!text){alert('まず相手の様子を入力してください');return;}
+  const box=document.getElementById('ai-impression-box');
+  box.style.display='block';box.innerHTML='<span class="ai-loading">AI が営業表現に変換中...</span>';
+  try{
+    const res=await fetch('https://api.anthropic.com/v1/messages',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({model:'claude-sonnet-4-20250514',max_tokens:1000,system:`あなたは営業経験豊富なビジネスコーチです。営業担当者が書いた「なんとなく感じた印象」を、誰が読んでも同じ温度感が伝わる「営業日報らしい表現」に変換してください。箇条書きで2〜3点、具体的な行動・表情・言葉を使い、ポジティブ/ネガティブの温度感は変えないで、短く端的に答えてください。`,messages:[{role:'user',content:`以下の印象を営業表現に変換してください：「${text}」`}]})});
+    const d=await res.json();
+    box.innerHTML=(d.content?.map(c=>c.text||'').join('')||'変換できませんでした').replace(/\n/g,'<br>');
+  }catch(e){box.innerHTML='変換に失敗しました。';}
+}
+
+function exportIcs(){
+  const items=visits.filter(v=>v.nextDate);
+  if(!items.length){alert('次回候補日が設定された記録がありません');return;}
+  let ics='BEGIN:VCALENDAR\r\nVERSION:2.0\r\nPRODID:-//SalesTracker//JA\r\n';
+  items.forEach(v=>{const d=v.nextDate.replace(/-/g,'');ics+=`BEGIN:VEVENT\r\nUID:${v.id}@salestracker\r\nDTSTART;VALUE=DATE:${d}\r\nDTEND;VALUE=DATE:${d}\r\nSUMMARY:【訪問】${v.company}\r\nDESCRIPTION:${(v.nextAction||'').replace(/\n/g,'\\n')}\r\nEND:VEVENT\r\n`;});
+  ics+='END:VCALENDAR';
+  const blob=new Blob([ics],{type:'text/calendar'});const a=document.createElement('a');a.href=URL.createObjectURL(blob);a.download='visits.ics';a.click();
+}
+
+function renderCompanies(){
+  const q=(document.getElementById('co-search').value||'').toLowerCase();
+  const sf=document.getElementById('co-filter-status').value;
+  let data=[...companies];
+  if(q)data=data.filter(c=>(c.name+c.industry+(c.address1||'')).toLowerCase().includes(q));
+  if(sf)data=data.filter(c=>c.status===sf);
+  const wrap=document.getElementById('company-table-wrap');
+  if(!data.length){wrap.innerHTML='<div class="empty">— No Companies —</div>';return;}
+  wrap.innerHTML=`<table class="company-table"><thead><tr><th>会社名</th><th>業種</th><th>住所</th><th>担当者</th><th>電話</th><th>ステータス</th><th></th></tr></thead><tbody>`+data.map(c=>`<tr><td><strong>${c.name}</strong></td><td style="font-size:12px;color:var(--text3)">${c.industry||''}</td><td style="font-size:11px;color:var(--text3)">${[c.address1,c.address2].filter(Boolean).join(' ')}</td><td style="font-size:12px">${c.contact||''}<br><span style="font-size:11px;color:var(--text3)">${c.title||''}</span></td><td style="font-size:12px;white-space:nowrap;color:var(--text2)">${c.phone||''}</td><td><span style="display:inline-flex;align-items:center;font-size:12px"><span class="status-dot" style="background:${STATUS_COLOR[c.status]||'#4a5568'};box-shadow:0 0 6px ${STATUS_COLOR[c.status]||'#4a5568'}"></span>${c.status}</span></td><td style="white-space:nowrap"><button class="btn btn-secondary btn-sm" onclick='editCompany("${c.id}")' style="margin-right:4px">編集</button><button class="btn btn-danger btn-sm" onclick='deleteCompany("${c.id}")'>削除</button></td></tr>`).join('')+'</tbody></table>';
+}
+
+async function lookupZip(){
+  const z=document.getElementById('co-zip').value.replace(/-/g,'');
+  if(z.length!==7)return;
+  try{const r=await fetch(`https://zipcloud.ibsnet.co.jp/api/search?zipcode=${z}`);const d=await r.json();if(d.results&&d.results[0]){const a=d.results[0];document.getElementById('co-address1').value=a.address1+a.address2+a.address3;}}catch(e){}
+}
+function openCompanyModal(){
+  document.getElementById('co-modal-title').textContent='企業登録';
+  document.getElementById('co-id').value='';
+  ['co-name','co-industry','co-zip','co-address1','co-address2','co-contact','co-title','co-phone','co-note'].forEach(id=>document.getElementById(id).value='');
+  document.getElementById('co-status').selectedIndex=0;
+  document.getElementById('company-modal').classList.add('open');
+}
+function closeCompanyModal(){document.getElementById('company-modal').classList.remove('open');}
+function editCompany(id){
+  const c=companies.find(x=>x.id===id);if(!c)return;
+  document.getElementById('co-modal-title').textContent='企業情報 編集';
+  document.getElementById('co-id').value=c.id;
+  document.getElementById('co-name').value=c.name;
+  document.getElementById('co-industry').value=c.industry||'';
+  document.getElementById('co-zip').value=c.zip||'';
+  document.getElementById('co-address1').value=c.address1||'';
+  document.getElementById('co-address2').value=c.address2||'';
+  document.getElementById('co-contact').value=c.contact||'';
+  document.getElementById('co-title').value=c.title||'';
+  document.getElementById('co-phone').value=c.phone||'';
+  document.getElementById('co-status').value=c.status;
+  document.getElementById('co-note').value=c.note||'';
+  document.getElementById('company-modal').classList.add('open');
+}
+function deleteCompany(id){if(!confirm('削除しますか？'))return;companies=companies.filter(c=>c.id!==id);save();renderCompanies();}
+function saveCompany(){
+  const name=document.getElementById('co-name').value.trim();
+  if(!name){alert('会社名を入力してください');return;}
+  const id=document.getElementById('co-id').value||uid();
+  const c={id,name,industry:document.getElementById('co-industry').value,zip:document.getElementById('co-zip').value,address1:document.getElementById('co-address1').value,address2:document.getElementById('co-address2').value,contact:document.getElementById('co-contact').value,title:document.getElementById('co-title').value,phone:document.getElementById('co-phone').value,status:document.getElementById('co-status').value,note:document.getElementById('co-note').value};
+  if(document.getElementById('co-id').value){companies=companies.map(x=>x.id===id?c:x);}else{companies.push(c);}
+  save();closeCompanyModal();renderCompanies();
+}
+
+function exportCsv(){
+  const headers=['会社名','業種','郵便番号','住所1','住所2','担当者名','役職','電話番号','ステータス','メモ'];
+  const rows=companies.map(c=>[c.name,c.industry||'',c.zip||'',c.address1||'',c.address2||'',c.contact||'',c.title||'',c.phone||'',c.status,c.note||''].map(v=>`"${String(v).replace(/"/g,'""')}"`).join(','));
+  const csv='\uFEFF'+[headers.join(','),...rows].join('\n');
+  const blob=new Blob([csv],{type:'text/csv'});const a=document.createElement('a');a.href=URL.createObjectURL(blob);a.download='companies.csv';a.click();
+}
+function importCsv(e){
+  const file=e.target.files[0];if(!file)return;
+  const reader=new FileReader();
+  reader.onload=ev=>{
+    const lines=ev.target.result.replace(/^\uFEFF/,'').split('\n').filter(l=>l.trim());
+    const headers=parseCsvLine(lines[0]).map(h=>h.trim());
+    const nameIdx=headers.findIndex(h=>h.includes('会社'));const industryIdx=headers.findIndex(h=>h.includes('業種'));const zipIdx=headers.findIndex(h=>h.includes('郵便'));const addr1Idx=headers.findIndex(h=>h.includes('住所1')||h.includes('都道府県'));const addr2Idx=headers.findIndex(h=>h.includes('住所2')||h.includes('番地'));const contactIdx=headers.findIndex(h=>h.includes('担当者'));const titleIdx=headers.findIndex(h=>h.includes('役職'));const phoneIdx=headers.findIndex(h=>h.includes('電話'));const statusIdx=headers.findIndex(h=>h.includes('ステータス'));const noteIdx=headers.findIndex(h=>h.includes('メモ'));
+    let added=0;
+    for(let i=1;i<lines.length;i++){const cols=parseCsvLine(lines[i]);const name=nameIdx>=0?cols[nameIdx]?.trim():'';if(!name)continue;if(companies.find(c=>c.name===name))continue;companies.push({id:uid(),name,industry:industryIdx>=0?cols[industryIdx]?.trim()||'':'',zip:zipIdx>=0?cols[zipIdx]?.trim()||'':'',address1:addr1Idx>=0?cols[addr1Idx]?.trim()||'':'',address2:addr2Idx>=0?cols[addr2Idx]?.trim()||'':'',contact:contactIdx>=0?cols[contactIdx]?.trim()||'':'',title:titleIdx>=0?cols[titleIdx]?.trim()||'':'',phone:phoneIdx>=0?cols[phoneIdx]?.trim()||'':'',status:statusIdx>=0?(cols[statusIdx]?.trim()||'未訪問'):'未訪問',note:noteIdx>=0?cols[noteIdx]?.trim()||'':''});added++;}
+    save();renderCompanies();alert(`${added}件インポートしました（重複スキップ済）`);e.target.value='';
+  };
+  reader.readAsText(file,'UTF-8');
+}
+function parseCsvLine(line){const result=[];let cur='';let inQ=false;for(let i=0;i<line.length;i++){const c=line[i];if(c==='"'){if(inQ&&line[i+1]==='"'){cur+='"';i++;}else{inQ=!inQ;}}else if(c===','&&!inQ){result.push(cur);cur='';}else{cur+=c;}}result.push(cur);return result;}
+
+const DICT=[
+  {cat:'🔴 完全拒否・門前払い',items:[
+    ['受付ブロック','受付で即座に取り次ぎを拒否された。「担当者は対応できない」と一方的に告げられ、資料を受け取る素振りもなかった'],
+    ['不在を理由に回避','「担当者が不在です」と言われたが、奥から人の声が聞こえており事実上の回避と判断した'],
+    ['強い語気で拒絶','「結構です」「間に合っています」と語気強く言われ、それ以上の会話を遮断された'],
+    ['無言・無視','話しかけても目を合わせず、無言で資料を突き返された。明確な拒絶のサインと判断した'],
+    ['追い払う態度','「忙しいので」と言いながら明らかに立ち去ろうとしており、引き留める余地がなかった'],
+  ]},
+  {cat:'🟠 塩対応・警戒',items:[
+    ['事務的な対応','質問には最小限の言葉で答えるのみで、感情的な起伏が一切なかった。業者慣れしている印象'],
+    ['アイコンタクトなし','終始手元の作業を続けており、こちらを見る場面がほぼなかった'],
+    ['早口・切り上げ','返答が単調かつ早口で、会話を早く終わらせようとする意図が伝わった'],
+    ['腕組み・後退り','話の途中で腕を組み、身体が後ろに引いていた。警戒・距離感を示す仕草と判断'],
+    ['素っ気ない一言','「資料だけ置いといてください」「後で見ます」と言われ、興味を示す様子はなかった'],
+    ['値踏みする目線','こちらの話よりも外見や名刺をじっくり見ていた。信頼性を測っている段階と思われる'],
+  ]},
+  {cat:'🟡 様子見・判断保留',items:[
+    ['持ち帰り姿勢','「一度確認してから連絡します」と言い、連絡先を受け取った。社内確認が必要な立場と推察'],
+    ['受け身で傾聴','こちらの話を否定せず最後まで聞いていたが、自分からの質問は一切なかった'],
+    ['曖昧な返答','「そうですね…」「まあ…」など、肯定とも否定ともとれない言葉が続いた'],
+    ['興味半分','「へえ、そういうのがあるんですね」と言いつつも、具体的な話には踏み込まなかった'],
+    ['タイミング待ち','「今は時期じゃないけど…」「半年後にまた来てもらえれば」と将来の可能性を示唆した'],
+    ['社内決定待ち','「上に話してみないと」「今期の予算次第で」など、外部要因を理由に保留していた'],
+  ]},
+  {cat:'🟢 興味あり・前向き',items:[
+    ['前のめり傾聴','話が進むにつれて前傾姿勢になり、メモを取り始めた。関心の高まりを示す明確なサイン'],
+    ['自発的な質問','「それって〇〇にも使えますか？」「費用はどれくらいですか？」と自ら質問があった'],
+    ['具体的部署名が出る','「うちの製造部に話してみます」と具体的な部署・担当者名を出してきた'],
+    ['競合比較を聞く','「他社と何が違うんですか？」と聞かれた。検討に入っているサインと判断'],
+    ['時間を取ってくれた','「少し話を聞かせてもらえますか」と立ち止まって時間を確保してくれた'],
+    ['資料を積極的に受領','「あ、もらっておきます」と自ら手を伸ばして資料を受け取った'],
+    ['課題を話してくれた','自社の課題や困っていることを自発的に話し始めた。信頼関係の入口と判断'],
+  ]},
+  {cat:'🔵 前向き・商談近い',items:[
+    ['先方から名刺交換','「よかったら名刺交換しましょう」と先方から提案してきた'],
+    ['予算・時期に言及','「来期の予算でなら…」「〇月頃であれば検討できる」と具体的な時期が出た'],
+    ['上司・決裁者に繋ぐ','「うちの所長を呼んできます」と上の立場の方を呼んできてくれた'],
+    ['見積を要求','「一度金額を出してもらえますか」と見積依頼が来た。正式な商談フェーズへ移行'],
+    ['導入事例を求める','「実際に使っているところの話を聞けますか」と事例・実績への関心を示した'],
+    ['アポを設定','「来週の〇曜日に改めて来てもらえますか」と次回アポを先方から提案してきた'],
+  ]},
+  {cat:'👤 人物タイプ別メモ',items:[
+    ['直球・論理タイプ','「結局何が違うの？」とすぐ核心を聞いてくる。感情より根拠・数字・比較で動く。遠回りな話は逆効果'],
+    ['慎重・データ重視','「実績数字はありますか」「比較資料はありますか」とエビデンスを求める。事例・保証・数値が刺さる'],
+    ['人情・関係重視','担当者との相性や人柄を重視する傾向。雑談から入ることで警戒が解ける。定期的な顔出しが効く'],
+    ['多忙・短時間タイプ','30秒以内に用件を求めてくる。「1分だけいいですか」から始め、結論ファーストで話すと好印象'],
+    ['話好き・脱線タイプ','世間話が長くなりがち。関係構築には向くが商談への引き戻しが必要。共感しつつ本題へ誘導'],
+    ['疑り深い・確認タイプ','「本当に？」「その根拠は？」と細かく確認してくる。誇張せず正直な情報提供が信頼につながる'],
+    ['若手・権限なしタイプ','話は聞いてくれるが決裁権がない。上長への橋渡しをお願いするのが次のステップ'],
+    ['ベテラン・プライド高め','経験豊富で自社のやり方に誇りを持っている。否定せず「御社の場合はさらに〇〇が活きる」と添わせる'],
+  ]},
+  {cat:'💬 よく使う営業フレーズ',items:[
+    ['反応が薄かった時','「ご関心のあるタイミングでお声がけいただけますか」と関係を切らさずに撤退'],
+    ['次回アポを取る','「改めて詳しくご説明させてください。来週いかがでしょうか」'],
+    ['断られた後','「お時間いただきありがとうございました。またご縁がありましたら」と笑顔で退場'],
+    ['興味を引く一言','「同業の〇〇様で、〇〇%コスト削減できた事例があります」と実績で関心を引く'],
+    ['担当者へのつなぎ','「ご担当の方にお渡しいただけますか。ご覧になってからでも結構です」'],
+  ]},
+];
+
+function renderDict(){
+  document.getElementById('dict-content').innerHTML=DICT.map(s=>`<div class="dict-cat">${s.cat}</div>`+s.items.map(([t,e])=>`<div class="dict-row"><div class="dict-trigger">${t}</div><div class="dict-expr">${e}</div></div>`).join('')).join('');
+}
+
+renderDashboard();
+</script>
+</body>
+</html>
