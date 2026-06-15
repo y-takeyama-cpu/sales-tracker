@@ -1,0 +1,822 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>新規訪問管理ツール</title>
+<link href="https://fonts.googleapis.com/css2?family=Rajdhani:wght@500;600;700&family=Noto+Sans+JP:wght@300;400;500;700&display=swap" rel="stylesheet">
+<style>
+:root{--bg:#0a0c10;--bg2:#0f1218;--surface:#181e28;--surface2:#1e2635;--surface3:#242d3d;--border:rgba(255,255,255,0.06);--border2:rgba(255,255,255,0.12);--accent:#00e5a0;--accent2:rgba(0,229,160,0.12);--accent3:rgba(0,229,160,0.25);--accent-dim:#00b87d;--red:#ff4d4d;--red2:rgba(255,77,77,0.12);--amber:#ffb020;--amber2:rgba(255,176,32,0.12);--blue:#4d9fff;--blue2:rgba(77,159,255,0.12);--purple:#a78bfa;--purple2:rgba(167,139,250,0.12);--text:#f0f4ff;--text2:#c8d4e8;--text3:#9aaabf;--radius:10px;--radius-sm:6px;--font-display:'Rajdhani',sans-serif;--font:'Noto Sans JP',sans-serif;}
+*{box-sizing:border-box;margin:0;padding:0}
+body{font-family:var(--font);background:var(--bg);color:var(--text);min-height:100vh;font-size:17px;}
+.nav{background:rgba(10,12,16,0.95);border-bottom:1px solid var(--border);padding:0 24px;display:flex;align-items:center;height:56px;position:sticky;top:0;z-index:100;}
+.nav-logo{font-family:var(--font-display);font-size:18px;font-weight:700;color:var(--accent);letter-spacing:.1em;margin-right:auto;}
+.nav-tab{color:var(--text2);padding:0 14px;height:56px;display:flex;align-items:center;cursor:pointer;font-size:14px;font-family:var(--font-display);font-weight:600;letter-spacing:.06em;border-bottom:2px solid transparent;transition:all .2s;white-space:nowrap;text-transform:uppercase}
+.nav-tab:hover{color:var(--text)}.nav-tab.active{color:var(--accent);border-bottom-color:var(--accent)}
+.main{max-width:1000px;margin:0 auto;padding:28px 20px;position:relative;z-index:1;}
+.section{display:none}.section.active{display:block}
+.section-hd{display:flex;justify-content:space-between;align-items:center;margin-bottom:24px;flex-wrap:wrap;gap:10px}
+.section-hd h2{font-family:var(--font-display);font-size:22px;font-weight:700;letter-spacing:.08em;text-transform:uppercase}
+.section-hd-btns{display:flex;gap:8px;flex-wrap:wrap}
+.card{background:var(--surface);border:1px solid var(--border);border-radius:var(--radius);padding:20px;margin-bottom:16px;}
+.card-title{font-family:var(--font-display);font-size:15px;font-weight:600;letter-spacing:.12em;color:var(--text);margin-bottom:14px;text-transform:uppercase}
+.kpi-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(140px,1fr));gap:10px;margin-bottom:16px}
+.kpi-card{background:var(--surface);border:1px solid var(--border);border-radius:var(--radius);padding:16px;}
+.kpi-label{font-size:13px;color:var(--text);margin-bottom:6px;font-family:var(--font-display);letter-spacing:.08em;text-transform:uppercase}
+.kpi-row{display:flex;align-items:baseline;gap:4px}
+.kpi-val{font-family:var(--font-display);font-size:30px;font-weight:700;color:var(--accent);line-height:1}
+.kpi-target-val{font-size:14px;color:var(--text2)}
+.kpi-bar-bg{height:2px;background:var(--surface3);border-radius:2px;margin-top:10px}
+.kpi-bar{height:2px;background:linear-gradient(90deg,var(--accent-dim),var(--accent));border-radius:2px;transition:width .6s ease;}
+.funnel{display:flex;overflow-x:auto;gap:0}
+.funnel-step{flex:1;min-width:75px;text-align:center;padding:14px 4px;border-right:1px solid var(--border)}
+.funnel-step:last-child{border-right:none}
+.funnel-num{font-family:var(--font-display);font-size:24px;font-weight:700;color:var(--accent)}
+.funnel-lbl{font-size:13px;color:var(--text);margin-top:4px;font-family:var(--font-display);letter-spacing:.06em;text-transform:uppercase}
+.funnel-rate{font-size:13px;color:var(--text2);margin-top:4px}
+.btn{display:inline-flex;align-items:center;gap:6px;padding:8px 16px;border-radius:var(--radius-sm);border:none;cursor:pointer;font-family:var(--font);font-size:13px;font-weight:500;transition:all .15s}
+.btn-primary{background:var(--accent);color:#000;font-weight:700}.btn-primary:hover{background:#00ffb3;}
+.btn-secondary{background:var(--surface2);color:var(--text2);border:1px solid var(--border)}.btn-secondary:hover{background:var(--surface3);}
+.btn-outline{background:transparent;color:var(--accent);border:1px solid rgba(0,229,160,0.3)}.btn-outline:hover{background:var(--accent2)}
+.btn-sm{padding:5px 12px;font-size:12px}
+.btn-danger{background:var(--red2);color:var(--red);border:1px solid rgba(255,77,77,0.2)}.btn-danger:hover{background:rgba(255,77,77,0.2)}
+.form-grid{display:grid;grid-template-columns:1fr 1fr;gap:12px}
+@media(max-width:600px){.form-grid{grid-template-columns:1fr}}
+.form-full{grid-column:1/-1}
+label{display:block;font-size:13px;color:var(--text);margin-bottom:5px;font-family:var(--font-display);letter-spacing:.08em;text-transform:uppercase}
+input,select,textarea{width:100%;padding:9px 12px;border:1px solid var(--border2);border-radius:var(--radius-sm);font-family:var(--font);font-size:13px;color:var(--text);background:var(--surface2);transition:border-color .15s}
+input:focus,select:focus,textarea:focus{outline:none;border-color:var(--accent);}
+textarea{resize:vertical;min-height:72px}
+select option{background:var(--surface2)}
+.combo-wrap{position:relative}
+.combo-input{width:100%;padding:9px 12px;border:1px solid var(--border2);border-radius:var(--radius-sm);font-family:var(--font);font-size:13px;color:var(--text);background:var(--surface2);}
+.combo-list{position:absolute;top:calc(100% + 4px);left:0;right:0;background:var(--surface3);border:1px solid var(--border2);border-radius:var(--radius-sm);z-index:50;max-height:180px;overflow-y:auto;display:none;}
+.combo-list.open{display:block}
+.combo-item{padding:9px 12px;cursor:pointer;font-size:13px;color:var(--text2);}
+.combo-item:hover{background:var(--accent2);color:var(--accent)}
+.reaction-select{display:flex;flex-wrap:wrap;gap:6px}
+.r-btn{padding:6px 14px;border-radius:20px;border:1px solid var(--border2);cursor:pointer;font-size:12px;background:var(--surface2);color:var(--text2);font-weight:500}
+.r-btn[data-level="1"].selected{background:var(--red2);color:var(--red);}
+.r-btn[data-level="2"].selected{background:var(--amber2);color:var(--amber);}
+.r-btn[data-level="3"].selected{background:var(--blue2);color:var(--blue);}
+.r-btn[data-level="4"].selected{background:var(--accent2);color:var(--accent);}
+.r-btn[data-level="5"].selected{background:var(--purple2);color:var(--purple);}
+.ai-box{background:var(--accent2);border:1px solid var(--accent3);border-radius:var(--radius-sm);padding:12px 14px;margin-top:8px;font-size:13px;color:var(--accent);line-height:1.7;display:none}
+.ai-loading{color:var(--text3);font-style:italic}
+.log-table,.company-table{width:100%;border-collapse:collapse;font-size:14px}
+.log-table th,.company-table th{text-align:left;padding:10px 12px;font-size:13px;color:var(--text);font-weight:600;border-bottom:1px solid var(--border);white-space:nowrap;font-family:var(--font-display);letter-spacing:.08em;text-transform:uppercase}
+.log-table td,.company-table td{padding:11px 12px;border-bottom:1px solid var(--border);vertical-align:middle}
+.log-table tr:last-child td,.company-table tr:last-child td{border-bottom:none}
+.log-table tr:hover td,.company-table tr:hover td{background:rgba(255,255,255,0.02)}
+.badge{display:inline-block;padding:3px 10px;border-radius:20px;font-size:12px;font-weight:500}
+.badge-red{background:var(--red2);color:var(--red)}.badge-amber{background:var(--amber2);color:var(--amber)}
+.badge-blue{background:var(--blue2);color:var(--blue)}.badge-green{background:var(--accent2);color:var(--accent)}
+.badge-purple{background:var(--purple2);color:var(--purple)}
+.date-badge{display:inline-block;background:var(--blue2);color:var(--blue);padding:3px 10px;border-radius:12px;font-size:11px;font-weight:500}
+.modal-overlay{display:none;position:fixed;inset:0;background:rgba(0,0,0,0.7);z-index:200;align-items:center;justify-content:center;padding:16px}
+.modal-overlay.open{display:flex}
+.modal{background:var(--bg2);border:1px solid var(--border2);border-radius:var(--radius);max-width:660px;width:100%;max-height:92vh;overflow-y:auto;padding:28px;}
+.modal-header{display:flex;justify-content:space-between;align-items:center;margin-bottom:20px}
+.modal-title{font-family:var(--font-display);font-size:16px;font-weight:700;letter-spacing:.08em;text-transform:uppercase;color:var(--accent)}
+.close-btn{background:var(--surface2);border:1px solid var(--border);border-radius:4px;cursor:pointer;font-size:16px;color:var(--text3);width:28px;height:28px;display:flex;align-items:center;justify-content:center;}
+.kpi-settings-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(180px,1fr));gap:8px}
+.kpi-setting-row{display:flex;align-items:center;gap:10px;padding:10px 14px;background:var(--surface2);border:1px solid var(--border);border-radius:var(--radius-sm)}
+.kpi-setting-label{flex:1;font-size:14px;color:var(--text)}
+.kpi-setting-input{width:80px;text-align:right;padding:6px 10px}
+.dict-cat{font-family:var(--font-display);font-size:14px;font-weight:600;color:var(--accent);margin:20px 0 10px;letter-spacing:.12em;text-transform:uppercase;display:flex;align-items:center;gap:8px}
+.dict-cat::after{content:'';flex:1;height:1px;background:var(--border)}
+.dict-row{display:flex;gap:12px;padding:10px 0;border-bottom:1px solid var(--border);}
+.dict-trigger{flex:0 0 140px;font-size:13px;color:var(--accent);background:var(--accent2);padding:5px 10px;border-radius:4px;font-weight:500}
+.dict-expr{flex:1;font-size:13px;color:var(--text2);line-height:1.6}
+.zip-row{display:flex;gap:6px;}
+.zip-row input:first-child{flex:0 0 110px}.zip-row .zip-result{flex:1}
+.empty{text-align:center;padding:48px 20px;color:var(--text2);font-family:var(--font-display);letter-spacing:.06em;text-transform:uppercase;font-size:14px}
+.rank-badge{display:inline-flex;align-items:center;justify-content:center;font-family:var(--font-display);font-weight:700;font-size:13px;padding:3px 10px;border-radius:20px;letter-spacing:.06em}
+.rank-SS{background:linear-gradient(135deg,#ffd700,#ffaa00);color:#000}
+.rank-S{background:linear-gradient(135deg,#00e5a0,#00b87d);color:#000}
+.rank-A{background:var(--purple2);color:var(--purple);border:1px solid rgba(167,139,250,0.4)}
+.rank-B{background:var(--blue2);color:var(--blue);border:1px solid rgba(77,159,255,0.4)}
+.rank-C{background:var(--amber2);color:var(--amber);border:1px solid rgba(255,176,32,0.4)}
+.rank-E{background:var(--red2);color:var(--red);border:1px solid rgba(255,77,77,0.4)}
+.rank-未訪問{background:var(--surface3);color:var(--text3);border:1px solid var(--border)}
+.rank-訪問済{background:var(--accent2);color:var(--accent);border:1px solid var(--accent3)}
+.visit-count-badge{display:inline-flex;align-items:center;justify-content:center;width:24px;height:24px;border-radius:50%;font-size:11px;font-weight:700;font-family:var(--font-display);background:var(--surface3);color:var(--text2);border:1px solid var(--border2)}
+.visit-count-badge.has-visits{background:var(--blue2);color:var(--blue);}
+.timeline{padding:8px 0}
+.timeline-item{display:flex;gap:12px;padding:10px 0;border-bottom:1px solid var(--border);}
+.timeline-item:last-child{border-bottom:none}
+.timeline-dot{width:10px;height:10px;border-radius:50%;background:var(--accent);flex-shrink:0;margin-top:4px;}
+.timeline-content{flex:1}
+.timeline-date{font-size:11px;color:var(--text3);font-family:var(--font-display);margin-bottom:3px}
+.timeline-sub{font-size:12px;color:var(--text2)}
+.rank-trail{display:flex;align-items:center;gap:4px;flex-wrap:wrap;margin-top:8px}
+.rank-chart-row{display:flex;align-items:center;gap:10px;margin-bottom:8px}
+.rank-chart-label{width:80px;font-size:12px;font-family:var(--font-display);flex-shrink:0}
+.rank-chart-bar-bg{flex:1;height:20px;background:var(--surface3);border-radius:4px;overflow:hidden;}
+.rank-chart-bar{height:100%;border-radius:4px;display:flex;align-items:center;padding-left:8px}
+.rank-chart-val{font-size:11px;font-weight:700;font-family:var(--font-display);color:#000;white-space:nowrap}
+.rank-chart-count{width:40px;text-align:right;font-size:13px;font-family:var(--font-display);color:var(--text2)}
+</style>
+</head>
+<body>
+<nav class="nav">
+  <div class="nav-logo">&#x2B21; SALES TRACKER</div>
+  <span class="nav-tab active" onclick="showSection('dashboard',this)">Dashboard</span>
+  <span class="nav-tab" onclick="showSection('record',this)">Visit Log</span>
+  <span class="nav-tab" onclick="showSection('companies',this)">Companies</span>
+  <span class="nav-tab" onclick="showSection('members',this)">Members</span>
+  <span class="nav-tab" onclick="showSection('dict',this)">Dictionary</span>
+</nav>
+<div class="main">
+<div class="section active" id="section-dashboard">
+  <div class="section-hd"><h2>KPI Dashboard</h2><span id="dashboard-month" style="font-size:12px;color:var(--text3);font-family:var(--font-display);"></span></div>
+  <div style="display:flex;align-items:center;gap:10px;margin-bottom:20px;flex-wrap:wrap;background:var(--surface);border:1px solid var(--border);border-radius:var(--radius);padding:14px 16px">
+    <span style="font-size:13px;color:var(--text);font-family:var(--font-display);text-transform:uppercase">拠点</span>
+    <select id="base-filter" onchange="onBaseFilterChange()" style="width:110px;padding:7px 10px"><option value="">すべて</option><option value="仙台">仙台</option><option value="名古屋">名古屋</option><option value="本社">本社</option></select>
+    <span style="color:var(--border2);font-size:18px">×</span>
+    <span style="font-size:13px;color:var(--text);font-family:var(--font-display);text-transform:uppercase">担当者</span>
+    <select id="member-filter" onchange="onMemberFilterChange()" style="width:150px;padding:7px 10px"><option value="">すべて</option></select>
+    <span style="color:var(--border2);font-size:18px">×</span>
+    <span style="font-size:13px;color:var(--text);font-family:var(--font-display);text-transform:uppercase">年度</span>
+    <select id="fy-filter" onchange="onFyFilterChange()" style="width:120px;padding:7px 10px"><option value="2026">FY2026</option></select>
+    <span style="color:var(--border2);font-size:18px">×</span>
+    <span style="font-size:13px;color:var(--text);font-family:var(--font-display);text-transform:uppercase">月</span>
+    <select id="month-filter" onchange="onMonthFilterChange()" style="width:110px;padding:7px 10px"><option value="">すべて</option></select>
+    <div id="week-filter-wrap" style="display:none;align-items:center;gap:8px">
+      <span style="color:var(--border2);font-size:18px">×</span>
+      <select id="week-filter" onchange="renderDashboard()" style="width:110px;padding:7px 10px"><option value="">すべて</option></select>
+    </div>
+    <button class="btn btn-outline btn-sm" id="kpi-edit-btn" onclick="toggleKpiEdit()" style="display:none;margin-left:auto">&#9881; KPI目標を編集</button>
+  </div>
+  <div id="kpi-edit-panel" style="display:none" class="card">
+    <div class="card-title" id="kpi-edit-title">KPI目標の設定</div>
+    <div class="kpi-settings-grid" id="kpi-settings-grid"></div>
+    <div style="margin-top:16px;display:flex;gap:8px">
+      <button class="btn btn-primary btn-sm" onclick="saveKpiTargets()">保存</button>
+      <button class="btn btn-secondary btn-sm" onclick="toggleKpiEdit()">キャンセル</button>
+    </div>
+  </div>
+  <div id="member-kpi-section" style="display:none">
+    <div class="kpi-grid" id="kpi-grid"></div>
+    <div class="card"><div class="card-title">Conversion Funnel <span id="funnel-member-label" style="color:var(--accent);font-size:11px"></span></div><div class="funnel" id="funnel-view"></div></div>
+  </div>
+  <div class="card"><div class="card-title">&#x1F4CA; ランク別 企業分布</div><div id="rank-distribution"></div></div>
+  <div class="card"><div class="card-title">&#x1F464; 担当者別 行動量ランキング</div><div id="member-ranking"></div></div>
+  <div class="card"><div class="card-title">&#x1F4CA; 量 × 質 分析</div><div id="quality-analysis"></div></div>
+  <div class="card"><div class="card-title">Recent Visits（直近10件）</div><div id="recent-log"></div></div>
+</div>
+<div class="section" id="section-record">
+  <div class="section-hd"><h2>訪問記録</h2><div class="section-hd-btns"><button class="btn btn-outline btn-sm" onclick="exportIcs()">&#x1F4C5; .ics 出力</button><button class="btn btn-primary btn-sm" onclick="openVisitModal()">＋ 新規登録</button></div></div>
+  <div style="display:flex;align-items:center;gap:10px;margin-bottom:14px;flex-wrap:wrap;background:var(--surface);border:1px solid var(--border);border-radius:var(--radius);padding:14px 16px">
+    <select id="log-filter-base" onchange="onLogBaseFilterChange()" style="width:110px;padding:7px 10px"><option value="">すべて</option><option value="仙台">仙台</option><option value="名古屋">名古屋</option><option value="本社">本社</option></select>
+    <span style="color:var(--border2)">×</span>
+    <select id="log-filter-member" onchange="renderLog()" style="width:140px;padding:7px 10px"><option value="">すべて</option></select>
+    <span style="color:var(--border2)">×</span>
+    <select id="log-filter-reaction" onchange="renderLog()" style="width:120px;padding:7px 10px"><option value="">すべて</option><option value="1">完全拒否</option><option value="2">塩対応</option><option value="3">様子見</option><option value="4">興味あり</option><option value="5">前向き</option></select>
+    <input type="text" id="log-search" placeholder="会社名で検索..." oninput="renderLog()" style="flex:1;min-width:160px;padding:7px 12px">
+  </div>
+  <div class="card" style="padding:0;overflow:hidden"><div id="log-table-wrap"></div></div>
+</div>
+<div class="section" id="section-companies">
+  <div class="section-hd"><h2>企業リスト</h2><div class="section-hd-btns">
+    <button class="btn btn-danger btn-sm" onclick="deleteAllCompanies()">&#x1F5D1; 全件削除</button>
+    <button class="btn btn-danger btn-sm" id="delete-selected-btn" onclick="deleteSelectedCompanies()" style="display:none">&#x1F5D1; 選択削除 (<span id="selected-count">0</span>件)</button>
+    <label class="btn btn-outline btn-sm" style="cursor:pointer">&#x1F4E5; CSVインポート<input type="file" accept=".csv" id="csv-import" style="display:none" onchange="importCsv(event)"></label>
+    <button class="btn btn-outline btn-sm" onclick="exportCsv()">&#x1F4E4; CSVエクスポート</button>
+    <button class="btn btn-primary btn-sm" onclick="openCompanyModal()">＋ 企業追加</button>
+  </div></div>
+  <div style="display:flex;align-items:center;gap:10px;margin-bottom:14px;flex-wrap:wrap;background:var(--surface);border:1px solid var(--border);border-radius:var(--radius);padding:14px 16px">
+    <select id="co-filter-base" onchange="onCoBaseFilterChange()" style="width:110px;padding:7px 10px"><option value="">すべて</option><option value="仙台">仙台</option><option value="名古屋">名古屋</option><option value="本社">本社</option></select>
+    <span style="color:var(--border2)">×</span>
+    <select id="co-filter-member" onchange="renderCompanies()" style="width:140px;padding:7px 10px"><option value="">すべて</option></select>
+    <span style="color:var(--border2)">×</span>
+    <select id="co-filter-rank" onchange="renderCompanies()" style="width:130px;padding:7px 10px"><option value="">すべて</option><option value="未訪問">未訪問</option><option value="訪問済">訪問済</option><option value="SS">SS 受注</option><option value="S">S 見積</option><option value="A">A 面談</option><option value="B">B 把握</option><option value="C">C 不在</option><option value="E">E 門前払い</option></select>
+    <input type="text" id="co-search" placeholder="会社名で検索..." oninput="renderCompanies()" style="flex:1;min-width:160px;padding:7px 12px">
+  </div>
+  <div class="card" style="padding:0;overflow:hidden"><div id="company-table-wrap"></div></div>
+</div>
+<div class="section" id="section-members">
+  <div class="section-hd"><h2>メンバー管理</h2><button class="btn btn-primary btn-sm" onclick="openMemberModal()">＋ メンバー追加</button></div>
+  <div class="card" style="padding:0;overflow:hidden"><div id="member-table-wrap"></div></div>
+</div>
+<div class="section" id="section-dict">
+  <div class="section-hd"><h2>Dictionary</h2></div>
+  <div class="card" style="margin-bottom:20px">
+    <div class="card-title">&#x1F3C6; 訪問ランク定義</div>
+    <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(280px,1fr));gap:10px">
+      <div style="background:var(--surface2);border-radius:var(--radius-sm);padding:12px 16px;display:flex;gap:12px;"><span class="rank-badge rank-SS">SS</span><div><div style="font-size:13px;font-weight:500;color:var(--text)">受注</div><div style="font-size:12px;color:var(--text2)">正式に発注をいただいた状態。</div></div></div>
+      <div style="background:var(--surface2);border-radius:var(--radius-sm);padding:12px 16px;display:flex;gap:12px;"><span class="rank-badge rank-S">S</span><div><div style="font-size:13px;font-weight:500;color:var(--text)">見積</div><div style="font-size:12px;color:var(--text2)">見積依頼・見積書提出済み。商談フェーズ。</div></div></div>
+      <div style="background:var(--surface2);border-radius:var(--radius-sm);padding:12px 16px;display:flex;gap:12px;"><span class="rank-badge rank-A">A</span><div><div style="font-size:13px;font-weight:500;color:var(--text)">担当者・決裁者面談</div><div style="font-size:12px;color:var(--text2)">担当者または決裁者と直接会話できた。</div></div></div>
+      <div style="background:var(--surface2);border-radius:var(--radius-sm);padding:12px 16px;display:flex;gap:12px;"><span class="rank-badge rank-B">B</span><div><div style="font-size:13px;font-weight:500;color:var(--text)">担当者と部署を把握</div><div style="font-size:12px;color:var(--text2)">担当者名・部署が判明。次回アポへの道筋ができた。</div></div></div>
+      <div style="background:var(--surface2);border-radius:var(--radius-sm);padding:12px 16px;display:flex;gap:12px;"><span class="rank-badge rank-C">C</span><div><div style="font-size:13px;font-weight:500;color:var(--text)">不在</div><div style="font-size:12px;color:var(--text2)">訪問したが担当者不在。再訪・テレアポでフォロー。</div></div></div>
+      <div style="background:var(--surface2);border-radius:var(--radius-sm);padding:12px 16px;display:flex;gap:12px;"><span class="rank-badge rank-E">E</span><div><div style="font-size:13px;font-weight:500;color:var(--text)">門前払い</div><div style="font-size:12px;color:var(--text2)">受付で即拒否。時間・曜日・アプローチを変えて再挑戦。</div></div></div>
+      <div style="background:var(--surface2);border-radius:var(--radius-sm);padding:12px 16px;display:flex;gap:12px;"><span class="rank-badge rank-訪問済">訪問済</span><div><div style="font-size:13px;font-weight:500;color:var(--text)">訪問済（分類前）</div><div style="font-size:12px;color:var(--text2)">訪問した記録あり。ランクを更新しよう。</div></div></div>
+      <div style="background:var(--surface2);border-radius:var(--radius-sm);padding:12px 16px;display:flex;gap:12px;"><span class="rank-badge rank-未訪問">未訪問</span><div><div style="font-size:13px;font-weight:500;color:var(--text)">未訪問</div><div style="font-size:12px;color:var(--text2)">まだ訪問していないターゲット企業。</div></div></div>
+    </div>
+  </div>
+  <div class="card"><div class="card-title">&#x1F4AC; 表現辞典</div><div id="dict-content"></div></div>
+</div>
+</div>
+<!-- VISIT MODAL -->
+<div class="modal-overlay" id="visit-modal">
+<div class="modal">
+  <div class="modal-header"><span class="modal-title" id="visit-modal-title">新規登録</span><button class="close-btn" onclick="closeVisitModal()">✕</button></div>
+  <input type="hidden" id="f-id">
+  <div class="form-grid">
+    <div><label>訪問日 *</label><input type="date" id="f-date"></div>
+    <div><label>営業担当者名 *</label><div class="combo-wrap"><input class="combo-input" id="f-member" placeholder="選択または入力..." autocomplete="off" oninput="filterMemberCombo()" onfocus="openMemberCombo()" onblur="setTimeout(function(){closeCombo('f-member-list')},150)"><div class="combo-list" id="f-member-list"></div></div></div>
+    <div><label>会社名 *</label><input type="text" id="f-company" list="company-datalist" placeholder="株式会社〇〇"><datalist id="company-datalist"></datalist></div>
+    <div><label>業種</label><div class="combo-wrap"><input class="combo-input" id="f-industry" placeholder="選択または入力..." autocomplete="off" oninput="filterCombo('f-industry','industry-list',INDUSTRY_OPTIONS)" onfocus="openCombo('f-industry','industry-list',INDUSTRY_OPTIONS)" onblur="setTimeout(function(){closeCombo('industry-list')},150)"><div class="combo-list" id="industry-list"></div></div></div>
+    <div><label>対応者</label><select id="f-responder"><option>受付スタッフ</option><option>担当者（名刺交換）</option><option>担当者（名刺なし）</option><option>上長・決裁者</option><option>不在</option><option>その他</option></select></div>
+    <div><label>今回の訪問ランク</label><select id="f-rank"><option value="">選択しない</option><option value="SS">SS — 受注</option><option value="S">S — 見積</option><option value="A">A — 担当者・決裁者面談</option><option value="B">B — 担当者と部署を把握</option><option value="C">C — 不在</option><option value="E">E — 門前払い</option></select></div>
+    <div class="form-full"><label>相手の反応</label><div class="reaction-select"><span class="r-btn" data-level="1" onclick="selectReaction(this)">😤 完全拒否</span><span class="r-btn" data-level="2" onclick="selectReaction(this)">🥶 塩対応</span><span class="r-btn" data-level="3" onclick="selectReaction(this)">😐 様子見</span><span class="r-btn" data-level="4" onclick="selectReaction(this)">😊 興味あり</span><span class="r-btn" data-level="5" onclick="selectReaction(this)">🔥 前向き</span></div></div>
+    <div class="form-full"><label>どんな話をしたか</label><textarea id="f-talk" placeholder="簡単に..."></textarea></div>
+    <div class="form-full"><label>相手の様子・雰囲気</label><textarea id="f-impression" placeholder="なんとなく感じたことを..."></textarea><button class="btn btn-outline btn-sm" style="margin-top:8px" onclick="rewriteImpression()">✨ AIで営業表現に変換</button><div class="ai-box" id="ai-impression-box"></div></div>
+    <div class="form-full"><label>相手の特徴・人物メモ</label><textarea id="f-person" placeholder="40代男性、メガネ etc."></textarea></div>
+    <div><label>断られた理由</label><div class="combo-wrap"><input class="combo-input" id="f-reject" placeholder="選択または入力..." autocomplete="off" oninput="filterCombo('f-reject','reject-list',REJECT_OPTIONS)" onfocus="openCombo('f-reject','reject-list',REJECT_OPTIONS)" onblur="setTimeout(function(){closeCombo('reject-list')},150)"><div class="combo-list" id="reject-list"></div></div></div>
+    <div><label>反応が良かった内容</label><div class="combo-wrap"><input class="combo-input" id="f-good" placeholder="選択または入力..." autocomplete="off" oninput="filterCombo('f-good','good-list',GOOD_OPTIONS)" onfocus="openCombo('f-good','good-list',GOOD_OPTIONS)" onblur="setTimeout(function(){closeCombo('good-list')},150)"><div class="combo-list" id="good-list"></div></div></div>
+    <div><label>次回アクション</label><div class="combo-wrap"><input class="combo-input" id="f-next-action" placeholder="選択または入力..." autocomplete="off" oninput="filterCombo('f-next-action','next-action-list',NEXT_ACTION_OPTIONS)" onfocus="openCombo('f-next-action','next-action-list',NEXT_ACTION_OPTIONS)" onblur="setTimeout(function(){closeCombo('next-action-list')},150)"><div class="combo-list" id="next-action-list"></div></div></div>
+    <div><label>次回訪問候補日</label><input type="date" id="f-next-date"></div>
+  </div>
+  <div style="display:flex;gap:8px;margin-top:24px;justify-content:flex-end"><button class="btn btn-secondary" onclick="closeVisitModal()">キャンセル</button><button class="btn btn-primary" onclick="saveVisit()">保存</button></div>
+</div>
+</div>
+<!-- COMPANY MODAL -->
+<div class="modal-overlay" id="company-modal">
+<div class="modal">
+  <div class="modal-header"><span class="modal-title" id="co-modal-title">企業登録</span><button class="close-btn" onclick="closeCompanyModal()">✕</button></div>
+  <input type="hidden" id="co-id">
+  <div class="form-grid">
+    <div><label>会社名 *</label><input type="text" id="co-name"></div>
+    <div><label>業種</label><div class="combo-wrap"><input class="combo-input" id="co-industry" placeholder="選択または入力..." autocomplete="off" oninput="filterCombo('co-industry','co-industry-list',INDUSTRY_OPTIONS)" onfocus="openCombo('co-industry','co-industry-list',INDUSTRY_OPTIONS)" onblur="setTimeout(function(){closeCombo('co-industry-list')},150)"><div class="combo-list" id="co-industry-list"></div></div></div>
+    <div class="form-full"><label>郵便番号（自動補完）</label><div class="zip-row"><input type="text" id="co-zip" placeholder="例：980-0021" maxlength="8" oninput="lookupZip()"><input type="text" id="co-address1" placeholder="都道府県・市区町村（自動）" class="zip-result"></div></div>
+    <div class="form-full"><label>番地・建物名</label><input type="text" id="co-address2" placeholder="1-1-1 ビル2F"></div>
+    <div><label>ランク</label><select id="co-status"><option value="未訪問">未訪問</option><option value="訪問済">訪問済</option><option value="SS">SS — 受注</option><option value="S">S — 見積</option><option value="A">A — 担当者・決裁者面談</option><option value="B">B — 担当者と部署を把握</option><option value="C">C — 不在</option><option value="E">E — 門前払い</option></select></div>
+    <div><label>営業担当者</label><div class="combo-wrap"><input class="combo-input" id="co-sales-member" placeholder="選択または入力..." autocomplete="off" oninput="filterMemberComboById('co-sales-member','co-sales-member-list')" onfocus="filterMemberComboById('co-sales-member','co-sales-member-list');document.getElementById('co-sales-member-list').classList.add('open')" onblur="setTimeout(function(){closeCombo('co-sales-member-list')},150)"><div class="combo-list" id="co-sales-member-list"></div></div></div>
+    <div><label>担当者名（先方）</label><input type="text" id="co-contact" placeholder="山田 太郎"></div>
+    <div><label>担当者 役職</label><input type="text" id="co-title" placeholder="営業部長 etc."></div>
+    <div><label>電話番号</label><input type="tel" id="co-phone" placeholder="022-123-4567"></div>
+    <div class="form-full"><label>メモ</label><textarea id="co-note" style="min-height:56px"></textarea></div>
+  </div>
+  <div style="display:flex;gap:8px;margin-top:24px;justify-content:flex-end"><button class="btn btn-secondary" onclick="closeCompanyModal()">キャンセル</button><button class="btn btn-primary" onclick="saveCompany()">保存</button></div>
+</div>
+</div>
+<!-- MEMBER MODAL -->
+<div class="modal-overlay" id="member-modal">
+<div class="modal">
+  <div class="modal-header"><span class="modal-title" id="member-modal-title">メンバー登録</span><button class="close-btn" onclick="closeMemberModal()">✕</button></div>
+  <input type="hidden" id="mb-id">
+  <div class="form-grid">
+    <div><label>名前 *</label><input type="text" id="mb-name" placeholder="武山"></div>
+    <div><label>役職</label><input type="text" id="mb-role" placeholder="営業担当 etc."></div>
+    <div><label>拠点</label><select id="mb-base"><option value="">未設定</option><option value="仙台">仙台</option><option value="名古屋">名古屋</option><option value="本社">本社</option></select></div>
+  </div>
+  <div style="margin-top:16px"><div class="card-title" style="margin-bottom:12px">KPI目標（年間）</div><div class="kpi-settings-grid" id="mb-kpi-grid"></div></div>
+  <div style="display:flex;gap:8px;margin-top:24px;justify-content:flex-end"><button class="btn btn-secondary" onclick="closeMemberModal()">キャンセル</button><button class="btn btn-primary" onclick="saveMember()">保存</button></div>
+</div>
+</div>
+<!-- HISTORY MODAL -->
+<div class="modal-overlay" id="history-modal">
+<div class="modal" style="max-width:700px">
+  <div class="modal-header"><span class="modal-title" id="history-modal-title">訪問履歴</span><button class="close-btn" onclick="closeHistoryModal()">✕</button></div>
+  <div id="history-modal-body"></div>
+</div>
+</div>
+<script>
+var DEFAULT_TARGETS={research:600,visit:360,contact:120,card:60,info:36,hearing:12,quote:6,order:12};
+var KPI_META=[
+  {key:'research',label:'ターゲット選定'},{key:'visit',label:'訪問'},{key:'contact',label:'担当者接触'},
+  {key:'card',label:'名刺交換'},{key:'info',label:'情報収集'},{key:'hearing',label:'案件ヒアリング'},
+  {key:'quote',label:'見積'},{key:'order',label:'受注'}
+];
+var REACTION_LABELS=['','完全拒否','塩対応','様子見','興味あり','前向き'];
+var REACTION_BADGE=['','badge-red','badge-amber','badge-blue','badge-green','badge-purple'];
+var RANK_ORDER=['SS','S','A','B','C','訪問済','E','未訪問'];
+var RANK_COLOR={SS:'#ffd700',S:'#00e5a0',A:'#a78bfa',B:'#4d9fff',C:'#ffb020',E:'#ff4d4d'};
+var RANK_BAR_BG={SS:'linear-gradient(90deg,#ffaa00,#ffd700)',S:'linear-gradient(90deg,#00b87d,#00e5a0)',A:'linear-gradient(90deg,#7c5fd4,#a78bfa)',B:'linear-gradient(90deg,#2a7ad4,#4d9fff)',C:'linear-gradient(90deg,#cc8a00,#ffb020)',E:'linear-gradient(90deg,#cc2200,#ff4d4d)',訪問済:'linear-gradient(90deg,#00b87d,#00e5a0)',未訪問:'linear-gradient(90deg,#3a4556,#4a5568)'};
+var INDUSTRY_OPTIONS=['製造業','建設業','小売業','卸売業','飲食業','医療・福祉','IT・通信','金融・保険','不動産','運輸・物流','サービス業','JR','工事会社','盤会社','その他'];
+var REJECT_OPTIONS=['タイミングが悪い','担当者不在','予算がない','既存業者がいる','必要性を感じない','上司に確認が必要','忙しい','興味がない','価格が合わない','その他'];
+var GOOD_OPTIONS=['価格・コスト','スピード感','実績・事例','サービス内容','アフターフォロー','対応の丁寧さ','信頼性・実績','使いやすさ','その他'];
+var NEXT_ACTION_OPTIONS=['再訪問','担当者アポ取り','資料送付','電話フォロー','見積書作成','デモ・説明会','紹介依頼','御礼状送付','その他'];
+
+var visits=[];var companies=[];var members=[];
+
+var SUPABASE_URL='https://okhwsicxoxytpebaqeiv.supabase.co';
+var SUPABASE_KEY='eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Im9raHdzaWN4b3h5dHBlYmFxZWl2Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODA4MzUzOTMsImV4cCI6MjA5NjQxMTM5M30.nCquEoLPoSIb4BuabcjUnMBrwoijGa5o-0qU1arZrgA';
+var SUPA_HEADERS={'Content-Type':'application/json','apikey':SUPABASE_KEY,'Authorization':'Bearer '+SUPABASE_KEY};
+
+function showLoading(show){
+  var el=document.getElementById('loading-overlay');
+  if(!el){el=document.createElement('div');el.id='loading-overlay';el.style.cssText='position:fixed;inset:0;background:rgba(10,12,16,0.85);z-index:500;display:flex;align-items:center;justify-content:center;font-family:var(--font-display);color:var(--accent);font-size:18px;';el.innerHTML='LOADING...';document.body.appendChild(el);}
+  el.style.display=show?'flex':'none';
+}
+async function dbGet(table){var r=await fetch(SUPABASE_URL+'/rest/v1/'+table+'?select=*',{headers:SUPA_HEADERS});return r.json();}
+async function dbUpsert(table,data){await fetch(SUPABASE_URL+'/rest/v1/'+table,{method:'POST',headers:Object.assign({'Prefer':'resolution=merge-duplicates'},SUPA_HEADERS),body:JSON.stringify(data)});}
+async function dbDelete(table,id){await fetch(SUPABASE_URL+'/rest/v1/'+table+'?id=eq.'+id,{method:'DELETE',headers:SUPA_HEADERS});}
+
+async function loadAll(){
+  showLoading(true);
+  try{
+    var results=await Promise.all([dbGet('visits'),dbGet('companies'),dbGet('members')]);
+    visits=(results[0]||[]).map(function(x){return Object.assign({},x,{nextAction:x.next_action,nextDate:x.next_date});});
+    companies=(results[1]||[]).map(function(x){return Object.assign({},x,{salesMember:x.sales_member});});
+    members=(results[2]||[]).map(function(x){return Object.assign({},x,{kpiLabels:x.kpi_labels});});
+  }catch(e){console.error('load error:',e);}
+  showLoading(false);
+}
+
+async function saveVisitToDb(v){
+  var row={id:v.id,date:v.date,member:v.member,company:v.company,industry:v.industry,responder:v.responder,reaction:v.reaction,rank:v.rank,talk:v.talk,impression:v.impression,person:v.person,reject:v.reject,good:v.good,next_action:v.nextAction,next_date:v.nextDate};
+  await dbUpsert('visits',row);
+}
+async function saveCompanyToDb(c){
+  var row={id:c.id,name:c.name,industry:c.industry,zip:c.zip,address1:c.address1,address2:c.address2,sales_member:c.salesMember,contact:c.contact,title:c.title,phone:c.phone,status:c.status,note:c.note};
+  await dbUpsert('companies',row);
+}
+async function saveMemberToDb(m){
+  var row={id:m.id,name:m.name,role:m.role,base:m.base,kpi:m.kpi,kpi_labels:m.kpiLabels};
+  await dbUpsert('members',row);
+}
+async function deleteFromDb(table,id){await dbDelete(table,id);}
+
+function uid(){return Date.now().toString(36)+Math.random().toString(36).slice(2);}
+
+function rankBadge(rank){if(!rank)return '';return '<span class="rank-badge rank-'+rank+'">'+rank+'</span>';}
+
+function showSection(name,el){
+  document.querySelectorAll('.section').forEach(function(s){s.classList.remove('active');});
+  document.querySelectorAll('.nav-tab').forEach(function(t){t.classList.remove('active');});
+  var sec=document.getElementById('section-'+name);
+  if(sec)sec.classList.add('active');
+  if(el)el.classList.add('active');
+  if(name==='dashboard')renderDashboard();
+  if(name==='record')renderLog();
+  if(name==='companies')renderCompanies();
+  if(name==='members')renderMembers();
+  if(name==='dict')renderDict();
+}
+
+function openCombo(inputId,listId,opts){filterCombo(inputId,listId,opts);document.getElementById(listId).classList.add('open');}
+function closeCombo(listId){var el=document.getElementById(listId);if(el)el.classList.remove('open');}
+function filterCombo(inputId,listId,opts){
+  var q=document.getElementById(inputId).value.toLowerCase();
+  var filtered=q?opts.filter(function(o){return o.toLowerCase().indexOf(q)>=0;}):opts;
+  var list=document.getElementById(listId);
+  list.innerHTML=filtered.map(function(o){return '<div class="combo-item" onmousedown="pickCombo(\''+inputId+'\',\''+listId+'\',\''+o.replace(/'/g,"\\'")+'\')">' +o+'</div>';}).join('');
+  if(filtered.length)list.classList.add('open');else list.classList.remove('open');
+}
+function pickCombo(inputId,listId,val){document.getElementById(inputId).value=val;closeCombo(listId);}
+function filterMemberComboById(inputId,listId){
+  var q=document.getElementById(inputId).value.toLowerCase();
+  var opts=members.map(function(m){return m.name;});
+  var filtered=q?opts.filter(function(o){return o.toLowerCase().indexOf(q)>=0;}):opts;
+  var list=document.getElementById(listId);
+  list.innerHTML=filtered.map(function(o){return '<div class="combo-item" onmousedown="pickCombo(\''+inputId+'\',\''+listId+'\',\''+o.replace(/'/g,"\\'")+'\')">' +o+'</div>';}).join('');
+  if(filtered.length)list.classList.add('open');else list.classList.remove('open');
+}
+
+function buildFyOptions(){
+  var sel=document.getElementById('fy-filter');var cur=sel.value||'2026';sel.innerHTML='';
+  for(var fy=2026;fy<=2035;fy++){sel.innerHTML+='<option value="'+fy+'"'+(String(fy)===cur?' selected':'')+'>FY'+fy+'</option>';}
+}
+function onFyFilterChange(){buildMonthOptions();document.getElementById('month-filter').value='';document.getElementById('week-filter-wrap').style.display='none';renderDashboard();}
+function buildMonthOptions(){
+  var fy=parseInt(document.getElementById('fy-filter').value)||2026;
+  var sel=document.getElementById('month-filter');var cur=sel.value;var months=[];
+  for(var i=0;i<12;i++){var m=(4+i)%12+1;var y=m>=5?fy:fy+1;months.push({val:y+'-'+(m<10?'0':'')+m,label:y+'年'+m+'月'});}
+  sel.innerHTML='<option value="">すべて</option>'+months.map(function(mo){return '<option value="'+mo.val+'"'+(mo.val===cur?' selected':'')+'>'+mo.label+'</option>';}).join('');
+}
+function onMonthFilterChange(){
+  var month=document.getElementById('month-filter').value;
+  var weekWrap=document.getElementById('week-filter-wrap');
+  if(month){buildWeekOptions(month);weekWrap.style.display='flex';}else{weekWrap.style.display='none';}
+  renderDashboard();
+}
+function buildWeekOptions(month){
+  var sel=document.getElementById('week-filter');
+  var parts=month.split('-');var y=parseInt(parts[0]);var m=parseInt(parts[1]);
+  var lastDay=new Date(y,m,0);
+  var weekStart=new Date(y,m-1,1);var dow=weekStart.getDay();
+  if(dow!==1)weekStart.setDate(weekStart.getDate()-(dow===0?6:dow-1));
+  var weeks=[];var wNum=1;
+  while(weekStart<=lastDay){
+    var ws=new Date(weekStart);var we=new Date(weekStart);we.setDate(we.getDate()+6);
+    var wsStr=ws.toISOString().split('T')[0];var weStr=we.toISOString().split('T')[0];
+    weeks.push({val:wsStr+'_'+weStr,label:'第'+wNum+'週（'+m+'/'+ws.getDate()+'〜'+(we.getMonth()+1)+'/'+we.getDate()+'）'});
+    weekStart.setDate(weekStart.getDate()+7);wNum++;
+  }
+  sel.innerHTML='<option value="">すべて</option>'+weeks.map(function(w){return '<option value="'+w.val+'">'+w.label+'</option>';}).join('');
+}
+function getPeriodRange(){
+  var fy=parseInt(document.getElementById('fy-filter').value)||2026;
+  var month=document.getElementById('month-filter').value;
+  var weekSel=document.getElementById('week-filter');var week=weekSel?weekSel.value:'';
+  if(week){var parts=week.split('_');return{start:parts[0],end:parts[1],label:'FY'+fy+' '+(weekSel.options[weekSel.selectedIndex]?weekSel.options[weekSel.selectedIndex].text:'')};}
+  if(month){var mp=month.split('-');var end=new Date(parseInt(mp[0]),parseInt(mp[1]),0).toISOString().split('T')[0];return{start:month+'-01',end:end,label:'FY'+fy+' '+parseInt(mp[1])+'月'};}
+  return{start:fy+'-05-01',end:(fy+1)+'-04-30',label:'FY'+fy};
+}
+function initPeriodFilters(){buildFyOptions();buildMonthOptions();}
+
+function getMembersByBase(base){return base?members.filter(function(m){return m.base===base;}):members;}
+function updateMemberDropdown(selectId,base){
+  var sel=document.getElementById(selectId);
+  var cur=sel.value;
+  var filtered=getMembersByBase(base);
+  sel.innerHTML='<option value="">すべて</option>'+filtered.map(function(m){return '<option value="'+m.name+'"'+(m.name===cur?' selected':'')+'>'+m.name+'</option>';}).join('');
+  if(cur)sel.value=cur;
+}
+function onMemberFilterChange(){
+  var val=document.getElementById('member-filter').value;
+  renderDashboard();
+}
+function onBaseFilterChange(){var base=document.getElementById('base-filter').value;updateMemberDropdown('member-filter',base);renderDashboard();}
+function onLogBaseFilterChange(){var base=document.getElementById('log-filter-base').value;updateMemberDropdown('log-filter-member',base);renderLog();}
+function onCoBaseFilterChange(){var base=document.getElementById('co-filter-base').value;updateMemberDropdown('co-filter-member',base);renderCompanies();}
+
+function openMemberCombo(){filterMemberCombo();document.getElementById('f-member-list').classList.add('open');}
+function filterMemberCombo(){
+  var q=document.getElementById('f-member').value.toLowerCase();
+  var opts=members.map(function(m){return m.name;});
+  var filtered=q?opts.filter(function(o){return o.toLowerCase().indexOf(q)>=0;}):opts;
+  var list=document.getElementById('f-member-list');
+  list.innerHTML=filtered.map(function(o){return '<div class="combo-item" onmousedown="pickCombo(\'f-member\',\'f-member-list\',\''+o.replace(/'/g,"\\'")+'\')">' +o+'</div>';}).join('');
+  if(filtered.length)list.classList.add('open');else list.classList.remove('open');
+}
+
+function calcKpiActuals(fv){
+  var vv=fv||visits;
+  return{
+    research:companies.length,
+    visit:vv.length,
+    contact:vv.filter(function(v){return['担当者（名刺交換）','担当者（名刺なし）','上長・決裁者'].indexOf(v.responder)>=0;}).length,
+    card:vv.filter(function(v){return v.responder==='担当者（名刺交換）';}).length,
+    info:vv.filter(function(v){return v.good||v.talk;}).length,
+    hearing:vv.filter(function(v){return v.reaction>=4;}).length,
+    quote:vv.filter(function(v){return v.nextAction&&v.nextAction.indexOf('見積')>=0;}).length,
+    order:companies.filter(function(c){return c.status==='SS';}).length
+  };
+}
+
+function renderRankDistribution(fVisits,base){
+  var el=document.getElementById('rank-distribution');
+  var baseMemberNames=getMembersByBase(base).map(function(m){return m.name;});
+  var cos=companies.slice();
+  if(base)cos=cos.filter(function(c){return baseMemberNames.indexOf(c.salesMember)>=0;});
+  var total=cos.length||1;
+  var rankCounts={};
+  RANK_ORDER.forEach(function(r){rankCounts[r]=0;});
+  cos.forEach(function(c){var r=c.status||'未訪問';if(rankCounts[r]!==undefined)rankCounts[r]++;else rankCounts['未訪問']++;});
+  var rows=RANK_ORDER.map(function(r){
+    var cnt=rankCounts[r]||0;var pct=Math.round(cnt/total*100);
+    var barBg=RANK_BAR_BG[r]||'var(--surface3)';var textCol=['SS','S'].indexOf(r)>=0?'#000':'#fff';
+    return '<div class="rank-chart-row"><div class="rank-chart-label">'+rankBadge(r)+'</div><div class="rank-chart-bar-bg"><div class="rank-chart-bar" style="width:'+(cnt>0?Math.max(pct,3):0)+'%;background:'+barBg+'">'+(cnt>0?'<span class="rank-chart-val" style="color:'+textCol+'">'+cnt+'社</span>':'')+'</div></div><div class="rank-chart-count">'+pct+'%</div></div>';
+  }).join('');
+  el.innerHTML='<div style="margin-bottom:8px;font-size:12px;color:var(--text3)">対象企業 '+total+'社</div>'+rows;
+}
+
+function renderDashboard(){
+  initPeriodFilters();
+  var base=document.getElementById('base-filter').value;
+  updateMemberDropdown('member-filter',base);
+  var sel=document.getElementById('member-filter').value;
+  var period=getPeriodRange();var start=period.start;var end=period.end;var label=period.label;
+  var filteredMembers=getMembersByBase(base);
+  var filteredMemberNames=filteredMembers.map(function(m){return m.name;});
+  var fVisits=visits.filter(function(v){
+    if(base&&filteredMemberNames.indexOf(v.member)<0)return false;
+    if(sel&&v.member!==sel)return false;
+    return v.date>=start&&v.date<=end;
+  });
+  document.getElementById('dashboard-month').textContent=label;
+  var selMember=sel?members.filter(function(m){return m.name===sel;})[0]:null;
+  document.getElementById('kpi-edit-btn').style.display=sel?'inline-flex':'none';
+  document.getElementById('kpi-edit-panel').style.display='none';
+  document.getElementById('member-kpi-section').style.display=sel?'block':'none';
+  if(sel&&selMember){
+    var targets=selMember.kpi||DEFAULT_TARGETS;var customLabels=selMember.kpiLabels||{};var actuals=calcKpiActuals(fVisits);
+    var coOrder=companies.filter(function(c){return c.salesMember===sel&&c.status==='SS';}).length;
+    var coQuote=companies.filter(function(c){return c.salesMember===sel&&(c.status==='S'||c.status==='SS');}).length;
+    var actualsWithCo=Object.assign({},actuals,{order:coOrder,quote:coQuote});
+    document.getElementById('kpi-grid').innerHTML=KPI_META.map(function(k){
+      var v=actualsWithCo[k.key]||0,t=targets[k.key]||1;var pct=Math.min(100,Math.round(v/t*100));var lbl=customLabels[k.key]||k.label;
+      return '<div class="kpi-card"><div class="kpi-label">'+lbl+'</div><div class="kpi-row"><span class="kpi-val">'+v+'</span><span class="kpi-target-val"> / '+t+'</span></div><div class="kpi-bar-bg"><div class="kpi-bar" style="width:'+pct+'%"></div></div></div>';
+    }).join('');
+    document.getElementById('funnel-member-label').textContent='— '+sel+' / '+label;
+    var funnel=[{l:'訪問',v:actuals.visit},{l:'担当接触',v:actuals.contact},{l:'名刺交換',v:actuals.card},{l:'情報収集',v:actuals.info},{l:'ヒアリング',v:actuals.hearing},{l:'見積',v:coQuote},{l:'受注',v:coOrder}];
+    document.getElementById('funnel-view').innerHTML=funnel.map(function(f,i){
+      var prev=i===0?f.v:funnel[i-1].v;var rate=prev>0?Math.round(f.v/prev*100)+'%':'—';
+      return '<div class="funnel-step"><div class="funnel-num">'+f.v+'</div><div class="funnel-lbl">'+f.l+'</div>'+(i>0?'<div class="funnel-rate">'+rate+'</div>':'')+'</div>';
+    }).join('');
+  }
+  renderRankDistribution(fVisits,base);
+  var rankEl=document.getElementById('member-ranking');
+  if(!members.length){rankEl.innerHTML='<div class="empty">メンバーを登録してください</div>';}
+  else{
+    var rankData=filteredMembers.map(function(m){
+      var mv=visits.filter(function(v){return v.member===m.name&&v.date>=start&&v.date<=end;});
+      return{name:m.name,visit:mv.length,contact:mv.filter(function(v){return['担当者（名刺交換）','担当者（名刺なし）','上長・決裁者'].indexOf(v.responder)>=0;}).length,hearing:mv.filter(function(v){return v.reaction>=4;}).length,order:companies.filter(function(c){return c.salesMember===m.name&&c.status==='SS';}).length};
+    }).sort(function(a,b){return b.visit-a.visit;});
+    var maxV=Math.max.apply(null,[1].concat(rankData.map(function(r){return r.visit;})));
+    rankEl.innerHTML='<table class="log-table"><thead><tr><th>順位</th><th>担当者</th><th>訪問数</th><th>担当者接触</th><th>ヒアリング</th><th>受注(SS)</th><th>行動量</th></tr></thead><tbody>'+rankData.map(function(r,i){
+      var c=i===0?'#ffd700':i===1?'#c0c0c0':i===2?'#cd7f32':'var(--text3)';
+      return '<tr><td><span style="font-family:var(--font-display);font-size:18px;color:'+c+'">'+(i+1)+'</span></td><td><strong>'+r.name+'</strong></td><td><span style="font-family:var(--font-display);font-size:18px;color:var(--accent)">'+r.visit+'</span></td><td>'+r.contact+'</td><td>'+r.hearing+'</td><td><span style="font-family:var(--font-display);font-size:18px;color:var(--amber)">'+r.order+'</span></td><td style="width:140px"><div style="background:var(--surface3);border-radius:4px;height:8px"><div style="background:linear-gradient(90deg,var(--accent-dim),var(--accent));height:8px;border-radius:4px;width:'+Math.round(r.visit/maxV*100)+'%"></div></div></td></tr>';
+    }).join('')+'</tbody></table>';
+  }
+  var qaEl=document.getElementById('quality-analysis');
+  if(!members.length){qaEl.innerHTML='<div class="empty">メンバーを登録すると表示されます</div>';}
+  else{
+    var qaData=filteredMembers.map(function(m){
+      var mv=visits.filter(function(v){return v.member===m.name&&v.date>=start&&v.date<=end;});
+      var vc=mv.length;var hc=mv.filter(function(v){return v.reaction>=4;}).length;
+      var qc=companies.filter(function(c){return c.salesMember===m.name&&(c.status==='S'||c.status==='SS');}).length;
+      var oc=companies.filter(function(c){return c.salesMember===m.name&&c.status==='SS';}).length;
+      var hr=vc>0?Math.round(hc/vc*100):0;var qr=vc>0?Math.round(qc/vc*100):0;var or_=vc>0?Math.round(oc/vc*100):0;
+      var judge='',jc='var(--text3)';
+      if(vc>=20&&or_>=5){judge='🔥 量・質ともに高い';jc='var(--accent)';}
+      else if(vc>=20&&hr<10){judge='行動量◎ 質を改善';jc='var(--amber)';}
+      else if(vc<10&&hr>=15){judge='質◎ 行動量を増やそう';jc='var(--blue)';}
+      else if(vc===0){judge='— データなし';jc='var(--text3)';}
+      else{judge='📈 積み上げ中';jc='var(--text2)';}
+      return{name:m.name,vc:vc,qc:qc,oc:oc,hr:hr,qr:qr,or_:or_,judge:judge,jc:jc};
+    });
+    qaEl.innerHTML='<div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(280px,1fr));gap:12px">'+qaData.map(function(r){
+      return '<div style="background:var(--surface2);border:1px solid var(--border);border-radius:var(--radius);padding:16px;"><div style="display:flex;justify-content:space-between;margin-bottom:14px"><strong>'+r.name+'</strong><span style="font-size:11px;color:'+r.jc+'">'+r.judge+'</span></div><div style="display:grid;grid-template-columns:repeat(3,1fr);gap:8px;margin-bottom:12px"><div style="text-align:center;padding:10px 6px;background:var(--surface3);border-radius:var(--radius-sm)"><div style="font-family:var(--font-display);font-size:22px;font-weight:700;color:var(--accent)">'+r.vc+'</div><div style="font-size:10px;color:var(--text3)">VISITS</div></div><div style="text-align:center;padding:10px 6px;background:var(--surface3);border-radius:var(--radius-sm)"><div style="font-family:var(--font-display);font-size:22px;font-weight:700;color:var(--blue)">'+r.qc+'</div><div style="font-size:10px;color:var(--text3)">見積(S)</div></div><div style="text-align:center;padding:10px 6px;background:var(--surface3);border-radius:var(--radius-sm)"><div style="font-family:var(--font-display);font-size:22px;font-weight:700;color:var(--amber)">'+r.oc+'</div><div style="font-size:10px;color:var(--text3)">受注(SS)</div></div></div></div>';
+    }).join('')+'</div>';
+  }
+  var rl=document.getElementById('recent-log');
+  var recent=fVisits.slice().sort(function(a,b){return b.date.localeCompare(a.date);}).slice(0,10);
+  if(!recent.length){rl.innerHTML='<div class="empty">— No Records —</div>';return;}
+  rl.innerHTML='<table class="log-table"><thead><tr><th>Date</th><th>担当者</th><th>会社名</th><th>ランク</th><th>反応</th><th>次回</th></tr></thead><tbody>'+recent.map(function(v){
+    return '<tr><td style="white-space:nowrap;font-family:var(--font-display);color:var(--text2)">'+v.date+'</td><td style="color:var(--accent);font-weight:500">'+(v.member||'—')+'</td><td><strong>'+v.company+'</strong></td><td>'+rankBadge(v.rank)+'</td><td>'+(v.reaction?'<span class="badge '+REACTION_BADGE[v.reaction]+'">'+REACTION_LABELS[v.reaction]+'</span>':'')+'</td><td style="font-size:13px;color:var(--text2)">'+(v.nextAction||'')+'</td></tr>';
+  }).join('')+'</tbody></table>';
+}
+
+function toggleKpiEdit(){
+  var p=document.getElementById('kpi-edit-panel');
+  if(p.style.display==='none'||!p.style.display){
+    var sel=document.getElementById('member-filter').value;var m=members.filter(function(x){return x.name===sel;})[0];
+    var targets=(m&&m.kpi)||DEFAULT_TARGETS;var labels=(m&&m.kpiLabels)||{};
+    document.getElementById('kpi-edit-title').textContent='KPI目標設定 — '+sel+'（年間）';p.style.display='block';
+    document.getElementById('kpi-settings-grid').innerHTML=KPI_META.map(function(k){
+      return '<div class="kpi-setting-row" style="flex-direction:column;align-items:stretch;gap:6px"><div style="display:flex;align-items:center;gap:8px"><span style="font-size:11px;color:var(--text3);width:50px;">項目名</span><input type="text" id="kpi-label-'+k.key+'" value="'+(labels[k.key]||k.label)+'" style="flex:1;padding:5px 8px;font-size:12px"></div><div style="display:flex;align-items:center;gap:8px"><span style="font-size:11px;color:var(--text3);width:50px;">目標値</span><input class="kpi-setting-input" type="number" id="kpi-input-'+k.key+'" value="'+(targets[k.key]||0)+'" style="flex:1"></div></div>';
+    }).join('');
+  }else{p.style.display='none';}
+}
+async function saveKpiTargets(){
+  var sel=document.getElementById('member-filter').value;var m=members.filter(function(x){return x.name===sel;})[0];if(!m)return;
+  if(!m.kpi)m.kpi={};if(!m.kpiLabels)m.kpiLabels={};
+  KPI_META.forEach(function(k){
+    var v=parseInt(document.getElementById('kpi-input-'+k.key).value);if(!isNaN(v)&&v>=0)m.kpi[k.key]=v;
+    var lbl=document.getElementById('kpi-label-'+k.key).value.trim();if(lbl)m.kpiLabels[k.key]=lbl;
+  });
+  await saveMemberToDb(m);document.getElementById('kpi-edit-panel').style.display='none';renderDashboard();
+}
+
+function renderLog(){
+  var q=(document.getElementById('log-search').value||'').toLowerCase();
+  var rf=document.getElementById('log-filter-reaction').value;
+  var base=document.getElementById('log-filter-base').value;
+  var mem=document.getElementById('log-filter-member').value;
+  var baseMemberNames=getMembersByBase(base).map(function(m){return m.name;});
+  var data=visits.slice().sort(function(a,b){return b.date.localeCompare(a.date);});
+  if(base)data=data.filter(function(v){return baseMemberNames.indexOf(v.member)>=0;});
+  if(mem)data=data.filter(function(v){return v.member===mem;});
+  if(q)data=data.filter(function(v){return(v.company+(v.industry||'')).toLowerCase().indexOf(q)>=0;});
+  if(rf)data=data.filter(function(v){return String(v.reaction)===rf;});
+  var wrap=document.getElementById('log-table-wrap');
+  if(!data.length){wrap.innerHTML='<div class="empty">— No Records —</div>';return;}
+  wrap.innerHTML='<table class="log-table"><thead><tr><th>Date</th><th>担当者</th><th>会社名</th><th>業種</th><th>対応者</th><th>ランク</th><th>反応</th><th>次回候補日</th><th>次回アクション</th><th></th></tr></thead><tbody>'+data.map(function(v){
+    return '<tr><td style="white-space:nowrap;font-family:var(--font-display);color:var(--text2)">'+v.date+'</td><td style="color:var(--accent);font-weight:500">'+(v.member||'—')+'</td><td><strong>'+v.company+'</strong></td><td style="font-size:12px;color:var(--text3)">'+(v.industry||'')+'</td><td style="font-size:12px;color:var(--text2)">'+v.responder+'</td><td>'+rankBadge(v.rank)+'</td><td>'+(v.reaction?'<span class="badge '+REACTION_BADGE[v.reaction]+'">'+REACTION_LABELS[v.reaction]+'</span>':'')+'</td><td>'+(v.nextDate?'<span class="date-badge">'+v.nextDate+'</span>':'')+'</td><td style="font-size:12px;color:var(--text2)">'+(v.nextAction||'')+'</td><td style="white-space:nowrap"><button class="btn btn-secondary btn-sm" onclick="editVisit(\''+v.id+'\')" style="margin-right:4px">編集</button><button class="btn btn-danger btn-sm" onclick="deleteVisit(\''+v.id+'\')">削除</button></td></tr>';
+  }).join('')+'</tbody></table>';
+}
+
+var selectedReaction=0;
+function openVisitModal(){
+  document.getElementById('visit-modal-title').textContent='訪問記録 新規登録';
+  document.getElementById('f-id').value='';document.getElementById('f-date').value=new Date().toISOString().split('T')[0];
+  ['f-member','f-company','f-industry','f-talk','f-impression','f-person','f-reject','f-good','f-next-action','f-next-date'].forEach(function(id){document.getElementById(id).value='';});
+  document.getElementById('f-responder').selectedIndex=0;document.getElementById('f-rank').value='';
+  document.querySelectorAll('.r-btn').forEach(function(b){b.classList.remove('selected');});selectedReaction=0;
+  document.getElementById('ai-impression-box').style.display='none';
+  document.getElementById('company-datalist').innerHTML=companies.map(function(c){return '<option value="'+c.name+'">';}).join('');
+  document.getElementById('visit-modal').classList.add('open');
+}
+function closeVisitModal(){document.getElementById('visit-modal').classList.remove('open');}
+function selectReaction(el){document.querySelectorAll('.r-btn').forEach(function(b){b.classList.remove('selected');});el.classList.add('selected');selectedReaction=parseInt(el.dataset.level);}
+function editVisit(id){
+  var v=visits.filter(function(x){return x.id===id;})[0];if(!v)return;
+  document.getElementById('visit-modal-title').textContent='訪問記録 編集';
+  document.getElementById('f-id').value=v.id;document.getElementById('f-date').value=v.date;document.getElementById('f-member').value=v.member||'';document.getElementById('f-company').value=v.company;document.getElementById('f-industry').value=v.industry||'';document.getElementById('f-responder').value=v.responder;document.getElementById('f-rank').value=v.rank||'';document.getElementById('f-talk').value=v.talk||'';document.getElementById('f-impression').value=v.impression||'';document.getElementById('f-person').value=v.person||'';document.getElementById('f-reject').value=v.reject||'';document.getElementById('f-good').value=v.good||'';document.getElementById('f-next-action').value=v.nextAction||'';document.getElementById('f-next-date').value=v.nextDate||'';
+  document.querySelectorAll('.r-btn').forEach(function(b){b.classList.remove('selected');if(parseInt(b.dataset.level)===v.reaction)b.classList.add('selected');});selectedReaction=v.reaction||0;
+  document.getElementById('ai-impression-box').style.display='none';
+  document.getElementById('company-datalist').innerHTML=companies.map(function(c){return '<option value="'+c.name+'">';}).join('');
+  document.getElementById('visit-modal').classList.add('open');
+}
+function deleteVisit(id){if(!confirm('削除しますか？'))return;visits=visits.filter(function(v){return v.id!==id;});deleteFromDb('visits',id);renderLog();renderDashboard();}
+async function saveVisit(){
+  var company=document.getElementById('f-company').value.trim();if(!company){alert('会社名を入力してください');return;}
+  var id=document.getElementById('f-id').value||uid();var industry=document.getElementById('f-industry').value;var rank=document.getElementById('f-rank').value;
+  var v={id:id,date:document.getElementById('f-date').value,member:document.getElementById('f-member').value,company:company,industry:industry,responder:document.getElementById('f-responder').value,reaction:selectedReaction,rank:rank,talk:document.getElementById('f-talk').value,impression:document.getElementById('f-impression').value,person:document.getElementById('f-person').value,reject:document.getElementById('f-reject').value,good:document.getElementById('f-good').value,nextAction:document.getElementById('f-next-action').value,nextDate:document.getElementById('f-next-date').value};
+  if(document.getElementById('f-id').value){visits=visits.map(function(x){return x.id===id?v:x;});}else{visits.push(v);}
+  var existing=companies.filter(function(c){return c.name===company;})[0];
+  if(!existing){
+    var nc={id:uid(),name:company,industry:industry,zip:'',address1:'',address2:'',salesMember:v.member||'',contact:'',title:'',phone:'',status:rank||'訪問済',note:''};
+    companies.push(nc);await saveCompanyToDb(nc);
+  }else if(rank){
+    var rp=['SS','S','A','B','C','訪問済','E','未訪問'];
+    var cp=rp.indexOf(existing.status);var np=rp.indexOf(rank);
+    if(np<cp||cp===-1){existing.status=rank;await saveCompanyToDb(existing);}
+  }
+  await saveVisitToDb(v);closeVisitModal();renderLog();renderDashboard();
+}
+
+async function rewriteImpression(){
+  var text=document.getElementById('f-impression').value.trim();if(!text){alert('まず相手の様子を入力してください');return;}
+  var box=document.getElementById('ai-impression-box');box.style.display='block';box.innerHTML='<span class="ai-loading">AI が変換中...</span>';
+  try{
+    var res=await fetch('https://api.anthropic.com/v1/messages',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({model:'claude-sonnet-4-6',max_tokens:1000,system:'営業担当者が書いた印象メモを営業日報らしい表現に変換してください。箇条書きで2〜3点、短く端的に。',messages:[{role:'user',content:'変換：'+text}]})});
+    var d=await res.json();
+    box.innerHTML=(d.content&&d.content.map(function(c){return c.text||'';}).join(''))||'変換できませんでした';
+  }catch(e){box.innerHTML='変換に失敗しました。';}
+}
+
+function exportIcs(){
+  var items=visits.filter(function(v){return v.nextDate;});if(!items.length){alert('次回候補日が設定された記録がありません');return;}
+  var ics='BEGIN:VCALENDAR\r\nVERSION:2.0\r\nPRODID:-//SalesTracker//JA\r\n';
+  items.forEach(function(v){var d=v.nextDate.replace(/-/g,'');ics+='BEGIN:VEVENT\r\nUID:'+v.id+'@st\r\nDTSTART;VALUE=DATE:'+d+'\r\nDTEND;VALUE=DATE:'+d+'\r\nSUMMARY:【訪問】'+v.company+'\r\nEND:VEVENT\r\n';});
+  ics+='END:VCALENDAR';var blob=new Blob([ics],{type:'text/calendar'});var a=document.createElement('a');a.href=URL.createObjectURL(blob);a.download='visits.ics';a.click();
+}
+
+function openHistoryModal(companyName){
+  var co=companies.filter(function(c){return c.name===companyName;})[0];
+  var coVisits=visits.filter(function(v){return v.company===companyName;}).sort(function(a,b){return a.date.localeCompare(b.date);});
+  document.getElementById('history-modal-title').textContent='訪問履歴 — '+companyName;
+  var rankTrail=coVisits.filter(function(v){return v.rank;}).map(function(v){return v.rank;});
+  var body='<div style="display:flex;align-items:center;gap:12px;margin-bottom:16px;padding:12px 16px;background:var(--surface2);border-radius:var(--radius-sm)">';
+  body+='<div><div style="font-size:12px;color:var(--text3);margin-bottom:4px">現在のランク</div><div>'+rankBadge(co?co.status:'未訪問')+'</div></div>';
+  body+='<div style="width:1px;height:36px;background:var(--border2)"></div>';
+  body+='<div><div style="font-size:12px;color:var(--text3);margin-bottom:4px">累計訪問回数</div><div style="font-family:var(--font-display);font-size:22px;font-weight:700;color:var(--accent)">'+coVisits.length+'<span style="font-size:13px;color:var(--text3);margin-left:4px">回</span></div></div>';
+  if(rankTrail.length>0){body+='<div style="width:1px;height:36px;background:var(--border2)"></div><div><div style="font-size:12px;color:var(--text3);margin-bottom:4px">ランク推移</div><div class="rank-trail">'+rankTrail.map(function(r,i){return(i>0?'<span class="rank-trail-arrow">→</span>':'')+rankBadge(r);}).join('')+'</div></div>';}
+  body+='</div>';
+  if(!coVisits.length){body+='<div class="empty">まだ訪問記録がありません</div>';}
+  else{
+    body+='<div class="timeline">';
+    coVisits.forEach(function(v){
+      var dotColor=v.rank&&RANK_COLOR[v.rank]?RANK_COLOR[v.rank]:'var(--text3)';
+      body+='<div class="timeline-item"><div class="timeline-dot" style="background:'+dotColor+'"></div><div class="timeline-content"><div class="timeline-date">'+v.date+(v.member?' — '+v.member:'')+'</div><div style="display:flex;align-items:center;gap:8px;margin-bottom:4px">'+rankBadge(v.rank)+'<span style="font-size:13px;color:var(--text2)">'+v.responder+'</span>'+(v.reaction?'<span class="badge '+REACTION_BADGE[v.reaction]+'" style="font-size:11px">'+REACTION_LABELS[v.reaction]+'</span>':'')+'</div>'+(v.talk?'<div class="timeline-sub">📝 '+v.talk+'</div>':'')+(v.impression?'<div class="timeline-sub">'+v.impression+'</div>':'')+(v.reject?'<div class="timeline-sub" style="color:var(--red)">✕ '+v.reject+'</div>':'')+(v.good?'<div class="timeline-sub" style="color:var(--accent)">◎ '+v.good+'</div>':'')+(v.nextAction?'<div class="timeline-sub" style="color:var(--blue)">→ '+v.nextAction+(v.nextDate?' ('+v.nextDate+')':'')+'</div>':'')+'</div></div>';
+    });
+    body+='</div>';
+  }
+  document.getElementById('history-modal-body').innerHTML=body;
+  document.getElementById('history-modal').classList.add('open');
+}
+function closeHistoryModal(){document.getElementById('history-modal').classList.remove('open');}
+
+function renderCompanies(){
+  var q=(document.getElementById('co-search').value||'').toLowerCase();
+  var sf=document.getElementById('co-filter-rank').value;
+  var base=document.getElementById('co-filter-base').value;
+  var mem=document.getElementById('co-filter-member').value;
+  var baseMemberNames=getMembersByBase(base).map(function(m){return m.name;});
+  var data=companies.slice();
+  if(base)data=data.filter(function(c){return baseMemberNames.indexOf(c.salesMember)>=0;});
+  if(mem)data=data.filter(function(c){return c.salesMember===mem;});
+  if(q)data=data.filter(function(c){return(c.name+(c.industry||'')+(c.address1||'')).toLowerCase().indexOf(q)>=0;});
+  if(sf)data=data.filter(function(c){return c.status===sf;});
+  var wrap=document.getElementById('company-table-wrap');
+  if(!data.length){wrap.innerHTML='<div class="empty">— No Companies —</div>';return;}
+  wrap.innerHTML='<table class="company-table"><thead><tr><th style="width:36px"></th><th>会社名</th><th>業種</th><th>住所</th><th>営業担当</th><th>電話</th><th>ランク</th><th>訪問</th><th></th></tr></thead><tbody>'+data.map(function(c){
+    var coVisits=visits.filter(function(v){return v.company===c.name;});
+    var visitCount=coVisits.length;
+    var lastVisit=coVisits.slice().sort(function(a,b){return b.date.localeCompare(a.date);})[0];
+    var cid=c.id;var cname=c.name.replace(/"/g,'&quot;');
+    return '<tr><td><input type="checkbox" class="co-check" data-id="'+cid+'" onchange="updateSelectedCount()" style="width:16px;height:16px;cursor:pointer;display:block"></td><td><strong style="cursor:pointer;color:var(--accent)" onclick="openHistoryModal(this.parentElement.dataset.n)" data-n="'+cname+'">'+c.name+'</strong>'+(lastVisit?'<div style="font-size:11px;color:var(--text3);margin-top:2px">最終: '+lastVisit.date+'</div>':'')+'</td><td style="font-size:12px;color:var(--text3)">'+(c.industry||'')+'</td><td style="font-size:11px;color:var(--text3)">'+[c.address1,c.address2].filter(Boolean).join(' ')+'</td><td style="font-size:13px;color:var(--accent)">'+(c.salesMember||'')+'<br><span style="font-size:11px;color:var(--text3)">'+(c.contact||'')+'</span></td><td style="font-size:12px;color:var(--text2)">'+(c.phone||'')+'</td><td>'+rankBadge(c.status||'未訪問')+'</td><td><span class="visit-count-badge'+(visitCount>0?' has-visits':'')+'" onclick="openHistoryModal(this.parentElement.parentElement.cells[1].querySelector(\'strong\').dataset.n)" style="cursor:pointer" title="訪問履歴を見る">'+visitCount+'</span></td><td style="white-space:nowrap"><button class="btn btn-secondary btn-sm" onclick="editCompany(\''+cid+'\')" style="margin-right:4px">編集</button><button class="btn btn-danger btn-sm" onclick="deleteCompany(\''+cid+'\')">削除</button></td></tr>';
+  }).join('')+'</tbody></table>';
+  updateSelectedCount();
+}
+
+async function lookupZip(){
+  var z=document.getElementById('co-zip').value.replace(/-/g,'');if(z.length!==7)return;
+  try{var r=await fetch('https://zipcloud.ibsnet.co.jp/api/search?zipcode='+z);var d=await r.json();if(d.results&&d.results[0]){var a=d.results[0];document.getElementById('co-address1').value=a.address1+a.address2+a.address3;}}catch(e){}
+}
+function openCompanyModal(prefill){
+  document.getElementById('co-modal-title').textContent='企業登録';document.getElementById('co-id').value='';
+  ['co-name','co-industry','co-zip','co-address1','co-address2','co-sales-member','co-contact','co-title','co-phone','co-note'].forEach(function(id){document.getElementById(id).value='';});
+  document.getElementById('co-status').value='未訪問';
+  if(prefill){document.getElementById('co-name').value=prefill.name||'';document.getElementById('co-industry').value=prefill.industry||'';}
+  document.getElementById('company-modal').classList.add('open');
+}
+function closeCompanyModal(){document.getElementById('company-modal').classList.remove('open');}
+function editCompany(id){
+  var c=companies.filter(function(x){return x.id===id;})[0];if(!c)return;
+  document.getElementById('co-modal-title').textContent='企業情報 編集';document.getElementById('co-id').value=c.id;document.getElementById('co-name').value=c.name;document.getElementById('co-industry').value=c.industry||'';document.getElementById('co-zip').value=c.zip||'';document.getElementById('co-address1').value=c.address1||'';document.getElementById('co-address2').value=c.address2||'';document.getElementById('co-contact').value=c.contact||'';document.getElementById('co-sales-member').value=c.salesMember||'';document.getElementById('co-title').value=c.title||'';document.getElementById('co-phone').value=c.phone||'';document.getElementById('co-status').value=c.status||'未訪問';document.getElementById('co-note').value=c.note||'';
+  document.getElementById('company-modal').classList.add('open');
+}
+function deleteAllCompanies(){if(!confirm('全'+companies.length+'件削除しますか？'))return;if(!confirm('本当に全件削除しますか？'))return;var ids=companies.map(function(c){return c.id;});companies=[];ids.forEach(function(id){deleteFromDb('companies',id);});renderCompanies();}
+function updateSelectedCount(){var checked=document.querySelectorAll('.co-check:checked').length;var btn=document.getElementById('delete-selected-btn');var countEl=document.getElementById('selected-count');if(btn){btn.style.display=checked>0?'inline-flex':'none';}if(countEl){countEl.textContent=checked;}}
+function deleteSelectedCompanies(){var ids=Array.prototype.slice.call(document.querySelectorAll('.co-check:checked')).map(function(c){return c.dataset.id;});if(!ids.length)return;if(!confirm('選択した'+ids.length+'件を削除しますか？'))return;companies=companies.filter(function(c){return ids.indexOf(c.id)<0;});ids.forEach(function(id){deleteFromDb('companies',id);});renderCompanies();}
+function deleteCompany(id){if(!confirm('削除しますか？'))return;companies=companies.filter(function(c){return c.id!==id;});deleteFromDb('companies',id);renderCompanies();}
+async function saveCompany(){
+  var name=document.getElementById('co-name').value.trim();if(!name){alert('会社名を入力してください');return;}
+  var id=document.getElementById('co-id').value||uid();
+  var c={id:id,name:name,industry:document.getElementById('co-industry').value,zip:document.getElementById('co-zip').value,address1:document.getElementById('co-address1').value,address2:document.getElementById('co-address2').value,salesMember:document.getElementById('co-sales-member').value,contact:document.getElementById('co-contact').value,title:document.getElementById('co-title').value,phone:document.getElementById('co-phone').value,status:document.getElementById('co-status').value,note:document.getElementById('co-note').value};
+  if(document.getElementById('co-id').value){companies=companies.map(function(x){return x.id===id?c:x;});}else{companies.push(c);}
+  await saveCompanyToDb(c);closeCompanyModal();renderCompanies();
+}
+function exportCsv(){
+  var headers=['会社名','業種','郵便番号','住所1','住所2','担当者名','役職','電話番号','ランク','メモ'];
+  var rows=companies.map(function(c){return[c.name,c.industry||'',c.zip||'',c.address1||'',c.address2||'',c.contact||'',c.title||'',c.phone||'',c.status,c.note||''].map(function(v){return'"'+String(v).replace(/"/g,'""')+'"';}).join(',');});
+  var csv='\uFEFF'+[headers.join(',')].concat(rows).join('\n');var blob=new Blob([csv],{type:'text/csv'});var a=document.createElement('a');a.href=URL.createObjectURL(blob);a.download='companies.csv';a.click();
+}
+function importCsv(e){
+  var file=e.target.files[0];if(!file)return;
+  var reader=new FileReader();
+  reader.onload=async function(ev){
+    var lines=ev.target.result.replace(/^\uFEFF/,'').split('\n').filter(function(l){return l.trim();});
+    var headers=parseCsvLine(lines[0]).map(function(h){return h.trim();});
+    function gi(k){return headers.findIndex(function(h){return h.indexOf(k)>=0;});}
+    var nameIdx=gi('会社');var industryIdx=gi('業種');var zipIdx=gi('郵便');
+    var addr1Idx=headers.findIndex(function(h){return h.indexOf('住所1')>=0||h.indexOf('都道府県')>=0;});
+    var addr2Idx=headers.findIndex(function(h){return h.indexOf('住所2')>=0||h.indexOf('番地')>=0;});
+    var salesMemberIdx=headers.findIndex(function(h){return h.indexOf('営業担当')>=0;});
+    var contactIdx=headers.findIndex(function(h){return h.indexOf('担当者名')>=0||h.indexOf('担当者')>=0;});
+    var titleIdx=gi('役職');var phoneIdx=gi('電話');var statusIdx=gi('ランク');var noteIdx=gi('メモ');
+    var added=0;var skipped=0;var newRows=[];
+    for(var i=1;i<lines.length;i++){
+      var cols=parseCsvLine(lines[i]);var name=nameIdx>=0?cols[nameIdx].trim():'';if(!name)continue;
+      if(companies.filter(function(c){return c.name===name;}).length){skipped++;continue;}
+      var nc={id:uid(),name:name,industry:industryIdx>=0?cols[industryIdx].trim():'',zip:zipIdx>=0?cols[zipIdx].trim():'',address1:addr1Idx>=0?cols[addr1Idx].trim():'',address2:addr2Idx>=0?cols[addr2Idx].trim():'',salesMember:salesMemberIdx>=0?cols[salesMemberIdx].trim():'',contact:contactIdx>=0?cols[contactIdx].trim():'',title:titleIdx>=0?cols[titleIdx].trim():'',phone:phoneIdx>=0?cols[phoneIdx].trim():'',status:statusIdx>=0?(cols[statusIdx].trim()||'未訪問'):'未訪問',note:noteIdx>=0?cols[noteIdx].trim():''};
+      companies.push(nc);newRows.push(nc);added++;
+    }
+    if(newRows.length>0){
+      for(var j=0;j<newRows.length;j+=50){
+        var batch=newRows.slice(j,j+50);
+        var rows=batch.map(function(c){return{id:c.id,name:c.name,industry:c.industry,zip:c.zip,address1:c.address1,address2:c.address2,sales_member:c.salesMember,contact:c.contact,title:c.title,phone:c.phone,status:c.status,note:c.note};});
+        await dbUpsert('companies',rows);
+      }
+    }
+    renderCompanies();alert('インポート完了！\n追加：'+added+'件 / スキップ：'+skipped+'件');e.target.value='';
+  };reader.readAsText(file,'UTF-8');
+}
+function parseCsvLine(line){var result=[];var cur='';var inQ=false;for(var i=0;i<line.length;i++){var c=line[i];if(c==='"'){if(inQ&&line[i+1]==='"'){cur+='"';i++;}else{inQ=!inQ;}}else if(c===','&&!inQ){result.push(cur);cur='';}else{cur+=c;}}result.push(cur);return result;}
+
+function renderMembers(){
+  var wrap=document.getElementById('member-table-wrap');
+  if(!members.length){wrap.innerHTML='<div class="empty">メンバーが登録されていません</div>';return;}
+  var baseColor={'仙台':'var(--blue2)','名古屋':'var(--amber2)','本社':'var(--purple2)'};
+  var textColor={'仙台':'var(--blue)','名古屋':'var(--amber)','本社':'var(--purple)'};
+  wrap.innerHTML='<table class="log-table"><thead><tr><th>名前</th><th>拠点</th><th>役職</th><th>KPI目標（訪問）</th><th>累計訪問</th><th></th></tr></thead><tbody>'+members.map(function(m){
+    var vc=visits.filter(function(v){return v.member===m.name;}).length;
+    var target=(m.kpi&&m.kpi.visit)||DEFAULT_TARGETS.visit;
+    var bg=baseColor[m.base]||'var(--surface2)';var tc=textColor[m.base]||'var(--text3)';
+    return '<tr><td><strong>'+m.name+'</strong></td><td><span style="display:inline-block;padding:2px 10px;border-radius:12px;font-size:12px;background:'+bg+';color:'+tc+'">'+(m.base||'未設定')+'</span></td><td style="color:var(--text2)">'+(m.role||'')+'</td><td style="color:var(--text2)">'+target+'件/年</td><td><span style="font-family:var(--font-display);font-size:18px;color:var(--accent)">'+vc+'</span></td><td style="white-space:nowrap"><button class="btn btn-secondary btn-sm" onclick="editMember(\''+m.id+'\')" style="margin-right:4px">編集</button><button class="btn btn-danger btn-sm" onclick="deleteMember(\''+m.id+'\')">削除</button></td></tr>';
+  }).join('')+'</tbody></table>';
+}
+function openMemberModal(){
+  document.getElementById('member-modal-title').textContent='メンバー登録';document.getElementById('mb-id').value='';document.getElementById('mb-name').value='';document.getElementById('mb-role').value='';document.getElementById('mb-base').value='';
+  document.getElementById('mb-kpi-grid').innerHTML=KPI_META.map(function(k){return '<div class="kpi-setting-row"><span class="kpi-setting-label">'+k.label+'</span><input class="kpi-setting-input" type="number" id="mb-kpi-'+k.key+'" value="'+DEFAULT_TARGETS[k.key]+'"></div>';}).join('');
+  document.getElementById('member-modal').classList.add('open');
+}
+function closeMemberModal(){document.getElementById('member-modal').classList.remove('open');}
+function editMember(id){
+  var m=members.filter(function(x){return x.id===id;})[0];if(!m)return;
+  document.getElementById('member-modal-title').textContent='メンバー編集';document.getElementById('mb-id').value=m.id;document.getElementById('mb-name').value=m.name;document.getElementById('mb-role').value=m.role||'';document.getElementById('mb-base').value=m.base||'';
+  var kpi=m.kpi||DEFAULT_TARGETS;
+  document.getElementById('mb-kpi-grid').innerHTML=KPI_META.map(function(k){return '<div class="kpi-setting-row"><span class="kpi-setting-label">'+k.label+'</span><input class="kpi-setting-input" type="number" id="mb-kpi-'+k.key+'" value="'+(kpi[k.key]||0)+'"></div>';}).join('');
+  document.getElementById('member-modal').classList.add('open');
+}
+function deleteMember(id){if(!confirm('削除しますか？'))return;members=members.filter(function(m){return m.id!==id;});deleteFromDb('members',id);renderMembers();}
+async function saveMember(){
+  var name=document.getElementById('mb-name').value.trim();if(!name){alert('名前を入力してください');return;}
+  var id=document.getElementById('mb-id').value||uid();var kpi={};
+  KPI_META.forEach(function(k){var v=parseInt(document.getElementById('mb-kpi-'+k.key).value);kpi[k.key]=isNaN(v)?DEFAULT_TARGETS[k.key]:v;});
+  var m={id:id,name:name,role:document.getElementById('mb-role').value,base:document.getElementById('mb-base').value,kpi:kpi};
+  if(document.getElementById('mb-id').value){members=members.map(function(x){return x.id===id?m:x;});}else{members.push(m);}
+  await saveMemberToDb(m);closeMemberModal();renderMembers();renderDashboard();
+}
+
+var DICT=[
+  {cat:'🔴 完全拒否・門前払い',items:[['受付ブロック','受付で即座に取り次ぎを拒否。担当者は対応できないと一方的に告げられた'],['強い語気で拒絶','結構です・間に合っていますと語気強く言われ会話を遮断された'],['追い払う態度','忙しいのでと言いながら立ち去ろうとしており引き留める余地がなかった']]},
+  {cat:'🟠 塩対応・警戒',items:[['事務的な対応','質問には最小限の言葉で答えるのみで感情的な起伏が一切なかった'],['早口・切り上げ','返答が単調かつ早口で会話を早く終わらせようとする意図が伝わった'],['素っ気ない一言','資料だけ置いといてください・後で見ますと言われ興味を示す様子はなかった']]},
+  {cat:'🟡 様子見・判断保留',items:[['持ち帰り姿勢','一度確認してから連絡しますと言い連絡先を受け取った'],['曖昧な返答','そうですね…まあ…など肯定とも否定ともとれない言葉が続いた'],['社内決定待ち','上に話してみないと・今期の予算次第でなど外部要因を理由に保留していた']]},
+  {cat:'🟢 興味あり・前向き',items:[['前のめり傾聴','話が進むにつれ前傾姿勢になりメモを取り始めた'],['自発的な質問','費用はどれくらい？他社と何が違うの？と自ら質問があった'],['課題を話してくれた','自社の課題や困っていることを自発的に話し始めた']]},
+  {cat:'🔵 前向き・商談近い',items:[['先方から名刺交換','よかったら名刺交換しましょうと先方から提案してきた'],['見積を要求','一度金額を出してもらえますかと見積依頼が来た'],['アポを設定','来週の○曜日に改めて来てもらえますかと次回アポを先方から提案してきた']]},
+  {cat:'👤 人物タイプ別',items:[['直球・論理タイプ','結局何が違うの？とすぐ核心を聞いてくる。感情より根拠・数字・比較で動く'],['多忙・短時間タイプ','30秒以内に用件を求めてくる。1分だけいいですかから始め結論ファーストで話す'],['ベテラン・プライド高め','経験豊富で自社のやり方に誇りを持っている。御社の場合はさらに活きると添わせる']]},
+  {cat:'💬 よく使う営業フレーズ',items:[['反応が薄かった時','ご関心のあるタイミングでお声がけいただけますかと関係を切らさずに撤退'],['次回アポを取る','改めて詳しくご説明させてください。来週いかがでしょうか'],['担当者へのつなぎ','ご担当の方にお渡しいただけますか。ご覧になってからでも結構です']]}
+];
+function renderDict(){
+  document.getElementById('dict-content').innerHTML=DICT.map(function(s){
+    return '<div class="dict-cat">'+s.cat+'</div>'+s.items.map(function(item){return '<div class="dict-row"><div class="dict-trigger">'+item[0]+'</div><div class="dict-expr">'+item[1]+'</div></div>';}).join('');
+  }).join('');
+}
+
+renderDict();initPeriodFilters();
+loadAll().then(function(){
+  updateMemberDropdown('member-filter','');
+  updateMemberDropdown('log-filter-member','');
+  updateMemberDropdown('co-filter-member','');
+  renderDashboard();renderLog();renderCompanies();renderMembers();
+});
+</script>
+</body>
+</html>
